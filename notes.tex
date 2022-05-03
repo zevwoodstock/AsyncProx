@@ -1,0 +1,228 @@
+\documentclass[a4paper,11pt,fleqn]{article}
+%\usepackage{showkeys}
+%\usepackage{refcheck}%check unused refs if showkeys activated
+\usepackage{cite}
+\usepackage{amsmath,mathtools}
+\usepackage{amssymb}
+%-----------
+%\usepackage[usenames,dvipsnames]{pstricks}
+%\usepackage{pstricks-add}
+%\usepackage{pst-grad}
+%\usepackage{pst-plot}
+%\usepackage{pst-eucl}
+%\psset{algebraic}
+%--------
+\usepackage{tikz}
+\usepackage{pgfplots}
+\usepackage{makeidx}
+%\pgfplotsset{compat=1.15}
+\usepackage{mathrsfs}
+\usetikzlibrary{arrows}
+\definecolor{ffwwqq}{rgb}{1.,0.4,0.}
+\definecolor{qqzzqq}{rgb}{0.,0.6,0.}
+\definecolor{qqqqff}{rgb}{0.,0.,1.}
+\definecolor{dred}{HTML}{D90404}
+\definecolor{orng}{HTML}{D35400}
+\newcommand{\plc}[1]{{\color{dred}\sffamily #1}}
+\newcommand{\zcw}[1]{{\color{orng}\sffamily #1}}
+\newcommand{\dft}{\ensuremath{\operatorname{DFT}}\,}
+
+\usepackage{amssymb}
+\usepackage{mathrsfs} %pour mathscr
+\usepackage{theorem} 
+\usepackage{booktabs}
+\usepackage{euscript}
+\usepackage{exscale,relsize}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{srcltx}
+\usepackage{xcolor}
+\usepackage{charter}
+\usepackage{pifont}
+%\usepackage{mathabx}
+%\usepackage{ntheorem}
+%\usepackage[T1]{fontenc}
+%\usepackage[bitstream-charter]{mathdesign}
+\usepackage{url}
+
+\newcommand{\email}[1]{\href{mailto:#1}{\nolinkurl{#1}}}
+%------------------------------------------------------------------
+\topmargin-0.0cm
+\oddsidemargin -0.0cm
+\textwidth16.5cm 
+\headheight0.0cm
+\textheight21.3cm
+\parindent6mm
+\parskip9pt
+\tolerance1000
+%\usepackage{amsthm}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage{amsmath,color}
+\setlength\parindent{15pt} % for paragraph alignment
+\usepackage{wasysym}
+\usepackage{amssymb}
+\usepackage{epstopdf}
+\usepackage{float}
+\usepackage{mathrsfs}
+%\usepackage{subfig}
+\usetikzlibrary{arrows}
+\definecolor{xdxdff}{rgb}{0.6588235294117647,
+0.6588235294117647,0.6588}
+\definecolor{qqqqff}{rgb}{0.3333333333333333,
+0.3333333333333333,0.3333}
+\DeclareCaptionFormat{cont}{#1 (cont.)#2#3\par}
+
+%\usepackage[usenames,dvipsnames]{xcolor}
+%\date{May 11, 2017}
+%\newtheorem{theorem}{Theorem}[section]
+%\newtheorem{corollary}[theorem]{Corollary}
+%\newtheorem{proposition}[theorem]{Proposition}
+%\newtheorem{lemma}[theorem]{Lemma}
+%\newtheorem{example}[theorem]{Example}
+%\newtheorem{notation}[theorem]{Notation}
+%\newtheorem{definition}[theorem]{Definition}
+%\newtheorem{condition}[theorem]{Condition}
+%\newtheorem{algorithm}[theorem]{Algorithm}
+%\newtheorem{remark}[theorem]{Remark}
+%\newtheorem{problem}[theorem]{Problem}
+%\newtheorem{conjecture}[theorem]{Conjecture}
+%\newtheorem{question}[theorem]{Question}
+\newcommand{\vertiii}[1]{{\left\vert\kern-0.25ex\left\vert
+\kern-0.25ex\left\vert #1 
+\right\vert\kern-0.25ex\right\vert\kern-0.25ex
+\right\vert}}
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{corollary}[theorem]{Corollary}
+\newtheorem{question}[theorem]{Question}
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{assumption}[theorem]{Assumption}
+\theoremstyle{plain}{\theorembodyfont{\rmfamily}%
+\newtheorem{conjecture}[theorem]{Conjecture}}
+\theoremstyle{plain}{\theorembodyfont{\rmfamily}%
+\newtheorem{example}[theorem]{Example}}
+\theoremstyle{plain}{\theorembodyfont{\rmfamily}%
+\newtheorem{remark}[theorem]{Remark}}
+\theoremstyle{plain}{\theorembodyfont{\rmfamily}%
+\newtheorem{algorithm}[theorem]{Algorithm}}
+\theoremstyle{plain}{\theorembodyfont{\rmfamily}%
+\newtheorem{condition}[theorem]{Condition}}
+\theoremstyle{plain}{\theorembodyfont{\rmfamily}%
+\newtheorem{definition}[theorem]{Definition}}
+\theoremstyle{plain}{\theorembodyfont{\rmfamily}
+\newtheorem{fact}[theorem]{Fact}}
+\theoremstyle{plain}{\theorembodyfont{\rmfamily}
+\newtheorem{problem}[theorem]{Problem}}
+\theoremstyle{plain}{\theorembodyfont{\rmfamily}
+\newtheorem{notation}[theorem]{Notation}}
+\theoremstyle{plain}{\theorembodyfont{\rmfamily}
+\newtheorem{project}[theorem]{Project}}
+\def\proof{{\it Proof}. \ignorespaces}
+\def\endproof{\vbox{\hrule height0.6pt\hbox{\vrule height1.3ex% 
+width0.6pt\hskip0.8ex\vrule width0.6pt}\hrule
+height0.6pt}}
+\renewcommand\theenumi{(\roman{enumi})}
+\renewcommand\theenumii{(\alph{enumii})}
+\renewcommand{\labelenumi}{\rm (\roman{enumi})}
+\renewcommand{\labelenumii}{\rm (\alph{enumii})}
+\newcommand{\cone}{\ensuremath{\text{\rm cone}\,}}
+\newcommand{\spts}{\ensuremath{\text{\rm{spts}\,}}}
+\newcommand{\Fix}{\ensuremath{\text{\rm Fix}\,}}
+\newcommand{\sign}{\ensuremath{\text{\rm sign}\,}}
+\newcommand{\spa}{\ensuremath{\text{span}\,}}
+\newcommand{\soft}[1]{\ensuremath{{\operatorname{soft}}_{{#1}}\,}}
+\newcommand{\hard}[1]{\ensuremath{{\operatorname{hard}}_{{#1}}\,}}
+\newcommand{\Argmin}{\ensuremath{{\text{\rm Argmin}}}}
+\newcommand{\Scal}[2]{\bigg\langle{#1}\;\bigg|\:{#2}\bigg\rangle}
+\newcommand{\scal}[2]{{\langle{{#1}\mid{#2}}\rangle}}
+\newcommand{\sscal}[2]{{\big\langle{{#1}\mid{#2}}\big\rangle}}
+\newcommand{\abscal}[2]{\left|\left\langle{{#1}\mid{#2}}}%
+\newcommand{\emp}{\ensuremath{{\varnothing}}}
+\newcommand{\minimize}[2]{\ensuremath{\underset{\substack{{#1}}}%
+{\text{minimize}}\;\;#2 }}
+%\numberwithin{equation}{section}
+\setlength{\itemsep}{1pt} 
+
+
+%-------------------------------- HYPERLINKS -------------------
+%http://tug.ctan.org/cgi-bin/ctanPackageInformation.py?id=hyperref
+\definecolor{labelkey}{rgb}{0,0.08,0.45}
+\definecolor{refkey}{rgb}{0,0.6,0.0}
+\definecolor{Brown}{rgb}{0.45,0.0,0.05}
+\definecolor{dgreen}{rgb}{0.00,0.49,0.00}
+\definecolor{dblue}{rgb}{0,0.08,0.75}
+\RequirePackage[,colorlinks,hyperindex]{hyperref} %omitted dvips here
+\hypersetup{linktocpage=true,citecolor=dblue,linkcolor=dgreen}
+%--------------------------------------------------------------------
+%Command \theoremstyle already defined. }
+%Package natbib Error: Bibliography not compatible with author-year 
+%citations. ...and\NAT@force@numbers{}\NAT@force@numbers
+\usepackage{natbib}
+\setlength{\bibsep}{3.5pt}
+\def\HH{\mathcal H}
+\def\BHG{\mathcal {B}(\mathcal{H},\mathcal{G})}
+\def\card{\textnormal{card}}
+\def\GG{\mathcal G}
+\def\KK{\mathcal K}
+\def\G0{\Gamma_0(\mathcal G)}
+\def\H0{\Gamma_0(\mathcal H)}
+\newcommand{\NN}{\ensuremath{\mathbb N}}
+\newcommand{\RR}{\ensuremath{\mathbb{R}}}
+\newcommand{\iin}{\ensuremath{\textrm{i}(n)}}
+\newcommand{\ii}{\ensuremath{\textrm{i}}}
+\newcommand{\RP}{\ensuremath{\left[0,+\infty\right[}}
+\newcommand{\RM}{\ensuremath{\left]-\infty,0\right]}}
+\newcommand{\RMM}{\ensuremath{\left]-\infty,0\right[}}
+\newcommand{\BL}{\ensuremath{\EuScript B}\,}
+\newcommand{\RPP}{\ensuremath{\left]0,+\infty\right[}}
+\newcommand{\RPPX}{\ensuremath{\left]0,+\infty\right]}}
+\newcommand{\ran}{\ensuremath{\text{\rm ran}\,}}
+%\newcommand{\span}{\ensuremath{\text{\rm span}\,}}
+\def\sri{\textnormal{sri}}
+\newcommand{\reli}{\ensuremath{\text{\rm ri}\,}}
+\newcommand{\pushfwd}{\ensuremath{\mbox{\Large$\,\triangleright\,$}
+}}
+%\def\Id{\text{Id}}
+\newcommand{\menge}[2]{\big\{{#1}~\big |~{#2}\big\}}
+\newcommand{\Menge}[2]{\left\{{#1}~\left|~{#2}\right.\right\}}
+
+\newcommand*{\Id}{\text{\normalfont Id}}
+\usepackage{lipsum}
+\setcitestyle{square,citesep={,}}
+\newcommand\scalemath[2]{\scalebox{#1}{\mbox{\ensuremath
+{\displaystyle #2}}}}
+\newcommand{\dom}{\ensuremath{\text{\rm dom}\,}}
+\newcommand{\ri}{\ensuremath{\text{\rm ri}\,}}
+\newcommand{\bdry}{\ensuremath{\text{\rm bdry}\,}}
+\newcommand{\Int}{\ensuremath{\text{\rm int}\,}}
+\newcommand{\supp}{\ensuremath{\text{\rm supp}\,}}
+\newcommand{\gra}{\ensuremath{\text{\rm gra}\,}}
+\newcommand{\prox}{\ensuremath{\text{\rm Prox}\,}}
+\newcommand{\zer}{\ensuremath{\text{\rm zer}\,}}
+\newcommand{\rec}{\ensuremath{\text{\rm rec}\,}}
+\newcommand{\core}{\ensuremath{\text{\rm core}}}
+\newcommand{\range}{\ensuremath{\text{\rm range}\,}}
+\usepackage{lineno,hyperref}
+\modulolinenumbers[5]
+
+\bibliographystyle{elsarticle-num}
+
+\begin{document}
+%\title{``Whiteboard''}
+%\date{}
+%\maketitle
+\begin{itemize}
+\item
+Glaudin/PLC - async implementation could be pretty efficient
+\item
+Eckstein/PLC - no async implementation has ever been done, although
+it is the first-in-class for fully nonsmooth problems.
+\item
+Application areas:
+low-rank + sparse decomposition -- smooth, although there are
+likely problem-specific algos to compare.
+\end{itemize}
+
+\end{document}
+
