@@ -213,20 +213,6 @@ height0.6pt}}
 %\date{}
 %\maketitle
 
-Literature:
-\begin{itemize}
-\item
-Glaudin/PLC - Asynchronous implementation has not been studied
-\item
-Eckstein/PLC - Proven to work for asynchronous, but noone has
-programmed it. It is the first-in-class for fully nonsmooth
-problems.
-\item
-Application areas:
-low-rank + sparse decomposition -- smooth, although there are
-likely problem-specific algos to compare.
-\end{itemize}
-
 Preliminary To-Dos:
 \begin{itemize}
 \item
@@ -247,7 +233,7 @@ basic proximity operators from here
 compare with the premade MATLAB/Octave scripts available in their
 repo)
 \item
-\textbf{Theory and Vocabulary Questions} (if a question is not provided,
+\textbf{Theory and Vocabulary Homework} (if a question is not provided,
 please define the word \textbf{and} provide an intuitive
 description/example.):
 \begin{itemize}
@@ -290,17 +276,17 @@ What ``direction'' does the gradient point towards?
 Provide a geometric description of where the vector $x - \nabla
 f(x)$ points.
 \end{itemize}
-One of the main things we are going to be comparing is various
-algorithms which combine gradients, proximity operators, and
-projection operators. A special case of these algorithms is
-optimization algorithms, which are at the backbone of machine
-learning. We are specifically going to research
-\textbf{asynchronous}
-algorithms involving these tools -- we are going to implement them
-on challenging problems, determine the best hyperparameters for
-running them, and compare the algorithms between each other.
+One of our main tasks is to program asynchronous algorithms which
+involve gradients, projections, and proximity operators. These
+algorithms theoretically are proven to work in certain situations;
+however, they have not been asynchronously implemented to-date. A
+big research goal is to determine
+hyperparameter selection strategies for each algorithm, and write
+up a comparison of the available algorithms.
+Optimization algorithms -- which are the backbone of ML -- arise as
+a special case of these algorithms.
 
-Many of the papers provided in the Literature folder are involve
+Many of the papers provided in the Literature folder involve
 {\em firmly nonexpansive operators} -- this is a class which
 includes proximity operators, projections, and rescaled gradient
 operators (we must rescale by $1/L$ where $L$ is known as the
@@ -312,7 +298,21 @@ where $L$ comes from for now).
 \item
 Implement the main algorithms in Glau20 and Comb18 with the ability
 to activate the operators $(T_i)_{i\in I}$ asynchronously.
+\item
+Initial testing: implement algorithms for $(T_i)_{i\in I}$ being
+projections onto simple shapes in 2D (boxes, balls, half-planes,
+subspaces). Construct visualizations.
 \end{itemize}
+\end{itemize}
+
+Literature:
+\begin{itemize}
+\item
+Glaudin/PLC - Asynchronous implementation has not been studied
+\item
+onto simple shapes in 2D (boxes, balls, half-planes, subspaces).
+ow-rank + sparse decomposition -- smooth, although there are
+likely problem-specific algos to compare.
 \end{itemize}
 
 
