@@ -2,24 +2,57 @@ using LinearAlgebra
 using ProximalOperators
 using SparseArrays
 
-x = [[1.0,1.0]]
-v_star = [[5.0, 9.0], [3.0,8.0]]
-centers = [[2,4], [0,4], [1,5]]
 
-global norm_function = NormL2(1)
-global gamma = [1]
-global mu = [1,1]
-global a_star = [x[1]]
-global a = x
-global t_star = [x[1]]
-global b = [x[1], x[1]]
-global l = [x[1], x[1]]
-global l_star = [v_star[1]]
-global K = 2
+"""The problem currently has been tested on the intersection of 4 balls - 
+centred at (1,5), (0,4), (2,4), (1,3) so clearly, their point of intersection is (1,4)."""
+
+"""The next function with non zero slope I am trying to incorporate is the Linear function <c|x>. 
+I am having trouble generlaising this to higher dimensions and visualising what it will be like"""
+
+#intialising our problem
 global I = 1
-iters = 50000
+global K = 3
+global dims = 2
+centers = [[2,4], [0,4], [1,5], [1,3]]
 
-function sum_array(x)
+zeros_I = []
+zeros_K = []
+for i in 1:I
+    append!(zeros_I, [zeros(dims)])
+end
+for i in 1:K
+    append!(zeros_K, [zeros(dims)])
+end
+
+x = zeros_I
+v_star = zeros_K
+
+
+struct hyperparameters                  #these are not really hyperparameters, but it makes the code look mmore organised
+    gamma:: Vector{Float64}
+    mu::Vector{Float64}
+    a::Vector{Vector{Float64}}
+    a_star::Vector{Vector{Float64}}
+    b::Vector{Vector{Float64}}
+    b_star::Vector{Vector{Float64}}
+    t::Vector{Vector{Float64}}
+    t_star::Vector{Vector{Float64}}
+    l::Vector{Vector{Float64}}
+    l_star::Vector{Vector{Float64}}
+    iters:: Int32
+end
+
+
+#initialising all the global variables/hyperparameters
+params = hyperparameters([1], [1,1,1], zeros_I, zeros_I, zeros_K, zeros_K,           #gamma, mu, a, a star, b and b star
+                        zeros_K, zeros_I, zeros_K, zeros_I, 200000)                   #t and t star, l, l_star, iters
+
+#a function to find the L2 norm of a vector                       
+global norm_function = SqrNormL2(1)
+
+
+#a function to find the sum of all elements of an array like, v[1] + v[2] + .....
+function sum_array(x)                   
     global s = zeros(size(x[1], 1))
     for i in 1:size(x, 1)
         global s = s+x[i]
@@ -27,45 +60,65 @@ function sum_array(x)
     return s
 end
 
-global mode = "w"
-for j in 1:iters
+
+
+global mode = "w" #to write to file
+
+
+#the main loop starts here
+for j in 1:params.iters
     global lambda = 1/j + 0.5
+    #the learning rate decreases with iteration number
 
     sum_k = 0
+    #the loop running through I
     for i in 1:I
-        global l_star[i] = sum_array(v_star)
+        params.l_star[i] = sum_array(v_star)
         local f = Precompose(IndBallL2(1.0), Matrix(LinearAlgebra.I, 2,2), 1, -centers[i])
-        global a[i], y = prox(f, x[i]-l_star[i]*gamma[i] ,gamma[i])
-        global a_star[i] = (x[i]-a[i])./gamma[i] - l_star[i]
-        global t_star[i] = a_star[i] + sum_array(b_star)
-        sum_k = sum_k+(norm_function(t_star[i]))^2
+        params.a[i], y = prox(f, x[i]-params.l_star[i]*params.gamma[i] ,params.gamma[i])
+        params.a_star[i] = (x[i]-params.a[i])./params.gamma[i] - params.l_star[i]
+        global params.t_star[i] = params.a_star[i] + sum_array(params.b_star)
+        sum_k = sum_k+(norm_function(params.t_star[i]))*2
     end
     
     sum_i = 0
+    #the loop running through K
     for k in 1:K
-        l[k] = sum_array(x)
-        local f = Precompose(IndBallL2(1.0), Matrix(LinearAlgebra.I, 2,2), 1, -centers[k+I])
-        global b[k], y = prox(f, l[k] + mu[k]*v_star[k], mu[k])
-        b_star[k] = v_star[k] + (l[k]-b[k])./mu[k]
-        t[k] = b[k] - sum_array(a)
-        sum_i = sum_i+(norm_function(t[k]))^2
+        if((j+k)%2==0)
+            params.l[k] = sum_array(x)
+            if(k==K)
+                local f = Precompose(IndBallL2(1.0), Matrix(LinearAlgebra.I, 2,2), 1, -centers[k+I])
+                params.b[k],y = prox(f, params.l[k] + params.mu[k]*v_star[k], params.mu[k])
+            else
+                local f = Precompose(IndBallL2(1.0), Matrix(LinearAlgebra.I, 2,2), 1, -centers[k+I])
+                params.b[k],y = prox(f, params.l[k] + params.mu[k]*v_star[k], params.mu[k])
+            end
+            params.b_star[k] = v_star[k] + (params.l[k]-params.b[k])./params.mu[k]
+            params.t[k] = params.b[k] - sum_array(params.a)
+            sum_i = sum_i+(norm_function(params.t[k]))*2
+        end
     end
 
     tau =  sum_i + sum_k
     theta = 0
 
+    #finding theta
     if tau > 0
         sum_i = 0
         sum_k = 0
+        #finding the sum of the dot products related to the I set
         for i in 1:I
-            sum_i = sum_i+dot(x[i], t_star[i])-dot(a[i],a_star[i])
+            sum_i = sum_i+dot(x[i], params.t_star[i])-dot(params.a[i],params.a_star[i])
         end
+        #finding the sum of the dot products related to the K set
         for k in 1:K
-            sum_k = sum_k+dot(t[k],v_star[k])-dot(b[k],b_star[k])
+            sum_k = sum_k+dot(params.t[k],v_star[k])-dot(params.b[k],params.b_star[k])
         end
+        #using the 2 sums to find theta according to the formula
         theta = lambda*max(0,sum_i+sum_k)/tau
     end
 
+    #deciding to write to file or append
     if j>1
         global mode = "a"
     end
@@ -73,23 +126,24 @@ for j in 1:iters
         println(io,x)
     end
 
+    #updating our variables
     for i in 1:I
-        global x[i] = x[i] - theta*t_star[1]
+        global x[i] = x[i] - theta*params.t_star[1]
     end
     for k in 1:K
-        global v_star[k] = v_star[k] - theta*t[k]
+        global v_star[k] = v_star[k] - theta*params.t[k]
     end
     
 
 end
 
+#write to file and store the last x
 open("x.txt","a") do io
     println(io,x)
 end
 println(x)
 
 
-#plot graphs
 #grid search
 #bayesian 
 #hyperparameter optimisation
