@@ -10,10 +10,22 @@ centred at (1,5), (0,4), (2,4), (1,3) so clearly, their point of intersection is
 I am having trouble generlaising this to higher dimensions and visualising what it will be like"""
 
 #intialising our problem
-global I = 1
+global I = 2
 global K = 3
 global dims = 2
-centers = [[2,4], [0,4], [1,5], [1,3]]
+global gamma = [1,1]
+global mu = [1,1,1]
+centers = [[0,1], [0,1.1], [1,1], [1,1.1]]
+
+L = [[1,0], [0,1], [1,-1]]
+
+functions = []
+for i in 1:I+K-1
+    append!(functions, [Precompose(IndBallL2(1.0), Matrix(LinearAlgebra.I, dims,dims), 1, -centers[i])])
+end
+
+#append!(functions, [Linear([1,0])])
+append!(functions, [IndBallL2(0.001)])
 
 zeros_I = []
 zeros_K = []
@@ -28,9 +40,7 @@ x = zeros_I
 v_star = zeros_K
 
 
-struct hyperparameters                  #these are not really hyperparameters, but it makes the code look mmore organised
-    gamma:: Vector{Float64}
-    mu::Vector{Float64}
+struct variables                  #these are not really hyperparameters, but it makes the code look mmore organised~
     a::Vector{Vector{Float64}}
     a_star::Vector{Vector{Float64}}
     b::Vector{Vector{Float64}}
@@ -44,59 +54,66 @@ end
 
 
 #initialising all the global variables/hyperparameters
-params = hyperparameters([1], [1,1,1], zeros_I, zeros_I, zeros_K, zeros_K,           #gamma, mu, a, a star, b and b star
-                        zeros_K, zeros_I, zeros_K, zeros_I, 200000)                   #t and t star, l, l_star, iters
+vars = variables(zeros_I, zeros_I, zeros_K, zeros_K,           #gamma, mu, a, a star, b and b star
+                        zeros_K, zeros_I, zeros_K, zeros_I,40000)          #t and t star, l, l_star, iters
 
 #a function to find the L2 norm of a vector                       
 global norm_function = SqrNormL2(1)
 
+#a function to find the weighted sum of all elements of an array like, w[1]v[1] + w[2]v[2] + .....
 
-#a function to find the sum of all elements of an array like, v[1] + v[2] + .....
-function sum_array(x)                   
+function weighted_sum_array(weights,x)                   
     global s = zeros(size(x[1], 1))
     for i in 1:size(x, 1)
-        global s = s+x[i]
+        global s = s+weights[i]*x[i]
     end
     return s
 end
 
+function transpose(L)
+    L_star = []
+    temp = []
+    for i in 1:I
+        for k in 1:K
+            append!(temp, [L[k][i]])
+        end
+    end
+    for i in 1:I
+        append!(L_star, [[]])
+        for k in 1:K
+            append!(L_star[i], [temp[K*(i-1) + k]])
+        end
+    end
+    return L_star
+end
 
 
 global mode = "w" #to write to file
 
 
 #the main loop starts here
-for j in 1:params.iters
-    global lambda = 1/j + 0.5
+for j in 1:vars.iters
+    global lambda = 1/(j-0.5) + 0.5
     #the learning rate decreases with iteration number
 
     sum_k = 0
     #the loop running through I
     for i in 1:I
-        params.l_star[i] = sum_array(v_star)
-        local f = Precompose(IndBallL2(1.0), Matrix(LinearAlgebra.I, 2,2), 1, -centers[i])
-        params.a[i], y = prox(f, x[i]-params.l_star[i]*params.gamma[i] ,params.gamma[i])
-        params.a_star[i] = (x[i]-params.a[i])./params.gamma[i] - params.l_star[i]
-        global params.t_star[i] = params.a_star[i] + sum_array(params.b_star)
-        sum_k = sum_k+(norm_function(params.t_star[i]))*2
+        vars.l_star[i] = weighted_sum_array(transpose(L)[i], v_star)
+        vars.a[i], y = prox(functions[i], x[i]-vars.l_star[i]*gamma[i] ,gamma[i])
+        vars.a_star[i] = (x[i]-vars.a[i])./gamma[i] - vars.l_star[i]
+        vars.t_star[i] = vars.a_star[i] + weighted_sum_array(transpose(L)[i], vars.b_star)
+        sum_k = sum_k+(norm_function(vars.t_star[i]))*2
     end
     
     sum_i = 0
     #the loop running through K
     for k in 1:K
-        if((j+k)%2==0)
-            params.l[k] = sum_array(x)
-            if(k==K)
-                local f = Precompose(IndBallL2(1.0), Matrix(LinearAlgebra.I, 2,2), 1, -centers[k+I])
-                params.b[k],y = prox(f, params.l[k] + params.mu[k]*v_star[k], params.mu[k])
-            else
-                local f = Precompose(IndBallL2(1.0), Matrix(LinearAlgebra.I, 2,2), 1, -centers[k+I])
-                params.b[k],y = prox(f, params.l[k] + params.mu[k]*v_star[k], params.mu[k])
-            end
-            params.b_star[k] = v_star[k] + (params.l[k]-params.b[k])./params.mu[k]
-            params.t[k] = params.b[k] - sum_array(params.a)
-            sum_i = sum_i+(norm_function(params.t[k]))*2
-        end
+        vars.l[k] = weighted_sum_array(L[k], x)
+        vars.b[k],y = prox(functions[I+k], vars.l[k] + mu[k]*v_star[k], mu[k])
+        vars.b_star[k] = v_star[k] + (vars.l[k]-vars.b[k])./mu[k]
+        vars.t[k] = vars.b[k] - weighted_sum_array(L[k], vars.a)
+        sum_i = sum_i+(norm_function(vars.t[k]))*2
     end
 
     tau =  sum_i + sum_k
@@ -108,11 +125,11 @@ for j in 1:params.iters
         sum_k = 0
         #finding the sum of the dot products related to the I set
         for i in 1:I
-            sum_i = sum_i+dot(x[i], params.t_star[i])-dot(params.a[i],params.a_star[i])
+            sum_i = sum_i+dot(x[i], vars.t_star[i])-dot(vars.a[i],vars.a_star[i])
         end
         #finding the sum of the dot products related to the K set
         for k in 1:K
-            sum_k = sum_k+dot(params.t[k],v_star[k])-dot(params.b[k],params.b_star[k])
+            sum_k = sum_k+dot(vars.t[k],v_star[k])-dot(vars.b[k],vars.b_star[k])
         end
         #using the 2 sums to find theta according to the formula
         theta = lambda*max(0,sum_i+sum_k)/tau
@@ -128,10 +145,10 @@ for j in 1:params.iters
 
     #updating our variables
     for i in 1:I
-        global x[i] = x[i] - theta*params.t_star[1]
+        global x[i] = x[i] - theta*vars.t_star[i]
     end
     for k in 1:K
-        global v_star[k] = v_star[k] - theta*params.t[k]
+        global v_star[k] = v_star[k] - theta*vars.t[k]
     end
     
 
