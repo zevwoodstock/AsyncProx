@@ -1,6 +1,9 @@
 using LinearAlgebra
 using ProximalOperators
+using Random
 
+
+#inputs
 #intialising our problem
 global I = 2
 global K = 3
@@ -9,7 +12,10 @@ global gamma = [1,1]
 global mu = [1,1,1]
 centers = [[0,1], [0,1.1], [1,1], [1,1.1]]
 
-L = [[1,0], [0,1], [1,-1]]
+identity = [1 0;0 1]
+null_mat = [0 0;0 0]
+
+L_matrix = [[identity, null_mat], [null_mat, identity], [identity, -identity]]
 
 functions = []
 for i in 1:I+K-1
@@ -17,7 +23,12 @@ for i in 1:I+K-1
 end
 
 #append!(functions, [Linear([1,0])])
-append!(functions, [IndBallL2(0.001)])
+append!(functions, [IndBallL2(0.0001)])
+
+
+
+
+#main program
 
 
 zeros_I = []
@@ -33,8 +44,18 @@ for i in 1:K
     append!(sum_vector_k, [0.0])
 end
 
+#initialing an array to store the values of our main variables at every iteration
 x_history = [zeros_I]
 v_history = [zeros_K]
+
+#Variables for asynchronous implementation
+running_tasks = [[],[]]
+birthdates = [[],[]]
+task_number = [[],[]]
+global tasks_num = [0,0]
+minibatches = [[],[]]
+
+global a = zeros_I
 
 struct variables                  #these are not really hyperparameters, but it makes the code look mmore organised~
     a::Vector{Vector{Float64}}
@@ -51,20 +72,10 @@ end
 
 #initialising all the global variables/hyperparameters
 vars = variables(zeros_I, zeros_I, zeros_K, zeros_K,           #gamma, mu, a, a star, b and b star
-                        zeros_K, zeros_I, zeros_K, zeros_I,40000)          #t and t star, l, l_star, iters
+                        zeros_K, zeros_I, zeros_K, zeros_I,150000)          #t and t star, l, l_star, iters
 
 #a function to find the L2 norm of a vector                       
 global norm_function = SqrNormL2(1)
-
-#a function to find the weighted sum of all elements of an array like, w[1]v[1] + w[2]v[2] + .....
-
-function weighted_sum_array(weights,x)                   
-    global s = zeros(size(x[1], 1))
-    for i in 1:size(x, 1)
-        global s = s+weights[i]*x[i]
-    end
-    return s
-end
 
 function transpose(L)
     L_star = []
@@ -83,21 +94,47 @@ function transpose(L)
     return L_star
 end
 
+function matrix_sum(matrix_array, x)
+    n = length(x)
+    sum = [0;0]
+    for i in 1:n
+        temp = x[i]
+        #each temp corresponds to each x_history
+        #each matrix_array corresponds to vector of matrices for a vector of all Xs
+        reshape(temp, 1, length(temp))
+        sum = sum + matrix_array[i]*temp
+    end
+    return sum
+end
 
-global mode = "w" #to write to file
+#generate random seeds each time
 
 
 
-#Variables for asynchronous implementation
-running_tasks_i = []
-birthdates_i = []
-task_number_i = []
-global tasks_num_i = 0
+random_bitvector = bitrand(MersenneTwister(0), I)
+global empty_flag = false
+for i in 1:I
+    if random_bitvector[i]==1
+        global empty_flag = true
+    end
+end
 
-running_tasks_k = []
-birthdates_k = []
-task_number_k = []
-global tasks_num_k = 0
+if empty_flag==false
+    random_bitvector[1] = 1
+end
+
+complement_bitvector = []
+for i in 1:I
+    append!(complement_bitvector, [abs(1-random_bitvector[i])])
+end
+minibatches[1] = [random_bitvector, complement_bitvector]
+
+random_bitvector = bitrand(MersenneTwister(1), K)
+complement_bitvector = []
+for k in 1:K
+    append!(complement_bitvector, [abs(1-random_bitvector[k])])
+end
+minibatches[2] = [random_bitvector, complement_bitvector]
 
 
 #the main loop starts here
@@ -108,15 +145,15 @@ for j in 1:vars.iters
 
     #Checking if a task has been delayed for too long
     if j>1
-        D = 50
-        for b in 1:tasks_num_i
-            if birthdates_i[b]<j-D
-                newvals=fetch(running_tasks_i[b])
+        D = 10
+        for b in 1:tasks_num[1]
+            if birthdates[1][b]<j-D
+                newvals=fetch(running_tasks[1][b])
             end
         end
-        for b in 1:tasks_num_k
-            if birthdates_k[b]<j-D
-                newvals=fetch(running_tasks_k[b])
+        for b in 1:tasks_num[2]
+            if birthdates[2][b]<j-D
+                newvals=fetch(running_tasks[2][b])
             end
         end
     end
@@ -124,59 +161,71 @@ for j in 1:vars.iters
     #the loop running through I
     #schedule a new task in each iteration for each i in I, and append it to the running tasks vector
     for i in 1:I
-        vars.l_star[i] = weighted_sum_array(transpose(L)[i], v_history[j])
-        local task = @task prox(functions[i], x_history[j][i]-vars.l_star[i]*gamma[i] ,gamma[i])
-        schedule(task)
-        append!(running_tasks_i, [task])
-        append!(birthdates_i, [j])
-        append!(task_number_i, [i])
-        global tasks_num_i = tasks_num_i + 1
+        if (minibatches[1][j%2+1][i]==1) || (j==1) 
+            vars.l_star[i] = matrix_sum(transpose(L_matrix)[i], v_history[j])
+            local task = @task prox(functions[i], x_history[j][i]-vars.l_star[i]*gamma[i] ,gamma[i])
+            schedule(task)
+            append!(running_tasks[1], [task])
+            append!(birthdates[1], [j])
+            append!(task_number[1], [i])
+            global tasks_num[1] = tasks_num[1] + 1
+        end
     end
 
     #for iterations after the first
-    b = 1
-    while b<= tasks_num_i
-        if istaskdone(running_tasks_i[b]) == true
-            i = task_number_i[b]
-            vars.a[i], y = fetch(running_tasks_i[b])
-            vars.a_star[i] = (x_history[j][i]-vars.a[i])./gamma[i] - vars.l_star[i]
-            vars.t_star[i] = vars.a_star[i] + weighted_sum_array(transpose(L)[i], vars.b_star)
+    global birth = 1
+    while birth<= tasks_num[1]
+        if istaskdone(running_tasks[1][birth]) == true
+            i = task_number[1][birth]
+            if (minibatches[1][j%2+1][i]==1) || (j==1) 
+                vars.a[i], y = fetch(running_tasks[1][birth])
+                vars.a_star[i] = (x_history[j][i]-vars.a[i])./gamma[i] - vars.l_star[i]
+                deleteat!(running_tasks[1], birth)
+                deleteat!(birthdates[1], birth)
+                deleteat!(task_number[1], birth)
+                global tasks_num[1] = tasks_num[1] - 1
+            else
+                global birth = birth+1
+            end
+            vars.t_star[i] = vars.a_star[i] + matrix_sum(transpose(L_matrix)[i], vars.b_star)
             global sum_vector_i[i] = (norm_function(vars.t_star[i]))*2
-            deleteat!(running_tasks_i, b)
-            deleteat!(birthdates_i, b)
-            deleteat!(task_number_i, b)
-            global tasks_num_i = tasks_num_i - 1
         else
-            b = b+1
+            global birth = birth+1
         end
     end
 
 
     for k in 1:K
-        vars.l[k] = weighted_sum_array(L[k], x_history[j])
-        local task = @task prox(functions[I+k], vars.l[k] + mu[k]*v_history[j][k], mu[k])
-        schedule(task)
-        append!(running_tasks_k, [task])
-        append!(birthdates_k, [j])
-        append!(task_number_k, [k])
-        global tasks_num_k = tasks_num_k + 1
+        if (minibatches[2][j%2+1][k]==1) || (j==1) 
+            vars.l[k] = matrix_sum(L_matrix[k], x_history[j])
+            local task = @task prox(functions[I+k], vars.l[k] + mu[k]*v_history[j][k], mu[k])
+            schedule(task)
+            append!(running_tasks[2], [task])
+            append!(birthdates[2], [j])
+            append!(task_number[2], [k])
+            global tasks_num[2] = tasks_num[2] + 1
+        end
     end
 
     #for iterations after the first
-    b = 1
-    while b<= tasks_num_k
-        if istaskdone(running_tasks_k[b]) == true
-            k = task_number_k[b]
-            vars.b[k],y = fetch(running_tasks_k[b])
-            vars.b_star[k] = v_history[j][k] + (vars.l[k]-vars.b[k])./mu[k]
-            vars.t[k] = vars.b[k] - weighted_sum_array(L[k], vars.a)
+    global b = 1
+    while b<= tasks_num[2]
+        if istaskdone(running_tasks[2][b]) == true
+            k = task_number[2][b]
+            if (minibatches[2][j%2+1][k]==1) || (j==1)
+                vars.b[k],y = fetch(running_tasks[2][b])
+                vars.b_star[k] = v_history[j][k] + (vars.l[k]-vars.b[k])./mu[k]
+                deleteat!(running_tasks[2], b)
+                deleteat!(birthdates[2], b)
+                deleteat!(task_number[2], b)
+                global tasks_num[2] = tasks_num[2] - 1
+            else
+                global b = b+1
+            end
+            vars.t[k] = vars.b[k] - matrix_sum(L_matrix[k],vars.a)
             global sum_vector_k[k] = (norm_function(vars.t[k]))*2
-            deleteat!(running_tasks_k, b)
-            deleteat!(birthdates_k, b)
-            deleteat!(task_number_k, b)
-            global tasks_num_k = tasks_num_k - 1
         else
-            b = b+1
+            global b = b+1
         end
     end
 
@@ -207,19 +256,13 @@ for j in 1:vars.iters
         theta = lambda*max(0,sum)/tau
     end
 
-    #deciding to write to file or append
-    if j>1
-        global mode = "a"
-    end
-    open("x.txt",mode) do io
-        println(io,x)
-    end
-
     #updating our variables
+    global x = x_history[j]
     for i in 1:I
         global x[i] = x_history[j][i] - theta*vars.t_star[i]
     end
     append!(x_history, [x])
+    global v_star = v_history[j]
     for k in 1:K
         global v_star[k] = v_history[j][k] - theta*vars.t[k]
     end
@@ -228,14 +271,10 @@ for j in 1:vars.iters
 
 end
 
-#write to file and store the last x
-open("x.txt","a") do io
-    println(io,x)
-end
 println(x_history[vars.iters])
 
 
 #things left to do 
-#minibatches
-#L as a function or vector
+#L as a function
 #threads
+#mu and gamma
