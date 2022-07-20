@@ -5,15 +5,15 @@ using Random
 function rearrange(L::Vector{Vector{Vector}}, vars)
     L_star::Vector{Vector{Vector}} = []
     temp = []
-    for i in 1:vars.I
-        for k in 1:vars.K
+    for i in 1:functions_I
+        for k in 1:functions_K
             push!(temp, L[k][i])
         end
     end
-    for i in 1:vars.I
+    for i in 1:functions_I
         push!(L_star, [])
-        for k in 1:vars.K
-            push!(L_star[i], temp[vars.K*(i-1) + k])
+        for k in 1:functions_K
+            push!(L_star[i], temp[functions_K*(i-1) + k])
         end
     end
     return L_star
@@ -22,15 +22,15 @@ end
 function rearrange(L::Vector{Vector{Int64}}, vars)
     L_star::Vector{Vector{Int64}} = []
     temp::Vector{Int64} = []
-    for i in 1:vars.I
-        for k in 1:vars.K
+    for i in 1:functions_I
+        for k in 1:functions_K
             push!(temp, L[k][i])
         end
     end
-    for i in 1:vars.I
+    for i in 1:functions_I
         push!(L_star, [])
-        for k in 1:vars.K
-            push!(L_star[i], temp[vars.K*(i-1) + k])
+        for k in 1:functions_K
+            push!(L_star[i], temp[functions_K*(i-1) + k])
         end
     end
     return L_star
@@ -71,10 +71,10 @@ function linear_operator_sum(mat::Matrix, x, tr, vars)
     sum = [0;0]
     for i in 1:n
         temp = x[i]
-        #each temp corresponds to each x_history
+        #each temp corresponds to each res.x
         #each matrix_array corresponds to vector of matrices for a vector of all Xs
         reshape(temp, 1, length(temp))
-        sum = sum + mat[:, i*vars.dims-1:i*vars.dims]*temp
+        sum = sum + mat[:, i*dims-1:i*dims]*temp
     end
     return sum
 end
@@ -88,7 +88,7 @@ function generate_random(epsilon, ind)
 end
 
 function get_L(mat::AbstractMatrix, ind, vars)
-    return mat[ind*vars.dims-1:ind*vars.dims, :]
+    return mat[ind*dims-1:ind*dims, :]
 end
 
 function get_L(vect::Vector, ind, vars)
@@ -100,7 +100,7 @@ function get_minibatch(j)
     #and the complement vector selects the I's in the (j+1)th iteration. This was, all I's are covered every two iterations
     minibatches = [[],[]]
     if j%2==0
-        minibatches = [get_bitvector_pair(j, I), get_bitvector_pair(j+1, K)]
+        minibatches = [get_bitvector_pair(j, functions_I), get_bitvector_pair(j+1, functions_K)]
     end
     return minibatches
 end
@@ -134,12 +134,12 @@ function get_bitvector_pair(iter, ind)
     return [random_bitvector, complement_bitvector]
 end
 
-function check_task_delay(j, vars)
+function check_task_delay(j)
     #Checking if a task has been delayed for too long
     if j>1
         
         for b in 1:vars.tasks_num[1]
-            if vars.birthdates[1][b]<j-vars.D
+            if vars.birthdates[1][b]<j-D
                 newvals=fetch(vars.running_tasks[1][b])
             end
         end
@@ -151,7 +151,7 @@ function check_task_delay(j, vars)
     end
 end
 
-function compute(vars, minibatches, v_history, mu_history, L, j, ind)
+function compute(j, ind)
     birth = 1
     while birth<= vars.tasks_num[ind]
         if istaskdone(vars.running_tasks[ind][birth]) == true
@@ -159,10 +159,10 @@ function compute(vars, minibatches, v_history, mu_history, L, j, ind)
             #if (j==1)||(minibatches[ind][j%2+1][task]==1)
                 if ind==2
                     vars.b[task],y = fetch(vars.running_tasks[ind][birth])
-                    vars.b_star[task] = v_history[j][task] + (vars.l[task]-vars.b[task])./mu_history[j][task]
+                    vars.b_star[task] = res.v_star[j][task] + (vars.l[task]-vars.b[task])./vars.mu_history[j][task]
                 else
                     vars.a[task], y = fetch(vars.running_tasks[1][birth])
-                    vars.a_star[task] = (x_history[j][task]-vars.a[task])./gamma_history[j][task] - vars.l_star[task]
+                    vars.a_star[task] = (res.x[j][task]-vars.a[task])./vars.gamma_history[j][task] - vars.l_star[task]
                 end
                 delete_task(ind, birth, vars)
             #else
@@ -188,94 +188,86 @@ function custom_prox(t, f, y, gamma)
     return a,b
 end
 
-function define_tasks(minibatches, L, v_history, x_history, gamma_history, mu_history, vars, functions, j)
+function define_tasks(j)
     #schedule a new task in each iteration for each i in I, and append it to the running tasks vector
-    for i in 1:vars.I
+    for i in 1:functions_I
         #if (j==1) || (minibatches[1][j%2+1][i]==1) 
-            vars.l_star[i] = linear_operator_sum(get_L(rearrange(L, vars), i, vars), v_history[j], true, vars)
+            vars.l_star[i] = linear_operator_sum(get_L(rearrange(L, vars), i, vars), res.v_star[j], true, vars)
             delay = 0
             if i==1
                 delay = 0
             end
-            local task = @task custom_prox(delay,functions[i], x_history[j][i]-vars.l_star[i]*gamma_history[j][i] ,gamma_history[j][i])
+            local task = @task custom_prox(delay,functions[i], res.x[j][i]-vars.l_star[i]*vars.gamma_history[j][i] ,vars.gamma_history[j][i])
             add_task(task, 1, j, i, vars)
         #end
     end
 
-    for k in 1:vars.K
+    for k in 1:functions_K
         #if (j==1)  || (minibatches[2][j%2+1][k]==1)
-            vars.l[k] = linear_operator_sum(get_L(L, k, vars), x_history[j], false, vars)
+            vars.l[k] = linear_operator_sum(get_L(L, k, vars), res.x[j], false, vars)
             delay = 0
             if k==1
                 delay = 0
             end
 
-            local task = @task custom_prox(delay, functions[vars.I+k], vars.l[k] + mu_history[j][k]*v_history[j][k], mu_history[j][k])
+            local task = @task custom_prox(delay, functions[functions_I+k], vars.l[k] + vars.mu_history[j][k]*res.v_star[j][k], vars.mu_history[j][k])
             add_task(task, 2, j, k, vars)
         #end
     end
 end
 
-function calc_theta(vars, x_history, v_history, lambda, j)
+function calc_theta(j)
+    lambda = 1/(j-0.5) + 0.5
     tau = 0
-    for i in 1:vars.I
+    for i in 1:functions_I
         tau = tau + vars.sum_i[i] 
     end
 
-    for k in 1:vars.K
+    for k in 1:functions_K
         tau = tau+vars.sum_k[k]
     end
 
-    theta = 0
+    global theta = 0
 
     #finding theta
     if tau > 0
         sum = 0
         #finding the sum of the dot products related to the I set
-        for i in 1:vars.I
-            sum = sum+dot(x_history[j][i], vars.t_star[i])-dot(vars.a[i],vars.a_star[i])
+        for i in 1:functions_I
+            sum = sum+dot(res.x[j][i], vars.t_star[i])-dot(vars.a[i],vars.a_star[i])
         end
         #finding the sum of the dot products related to the K set
-        for k in 1:vars.K
-            sum = sum+dot(vars.t[k],v_history[j][k])-dot(vars.b[k],vars.b_star[k])
+        for k in 1:functions_K
+            sum = sum+dot(vars.t[k],res.v_star[j][k])-dot(vars.b[k],vars.b_star[k])
         end
         #using the 2 sums to find theta according to the formula
-        theta = lambda*max(0,sum)/tau
+        global theta = lambda*max(0,sum)/tau
     end
-    return theta
 end
 
-function update_vars(x_history, v_history, j, theta, vars)
-    x = x_history[j]
-    for i in 1:vars.I
-        x[i] = x_history[j][i] - theta*vars.t_star[i]
+function update_vars(j)
+    x = res.x[j]
+    for i in 1:functions_I
+        x[i] = res.x[j][i] - theta*vars.t_star[i]
     end
-    append!(x_history, [x])
-    v_star = v_history[j]
-    for k in 1:vars.K
-        v_star[k] = v_history[j][k] - theta*vars.t[k]
+    push!(res.x, x)
+    v_star = res.v_star[j]
+    for k in 1:functions_K
+        v_star[k] = res.v_star[j][k] - theta*vars.t[k]
     end
-    append!(v_history, [v_star])
+    push!(res.v_star, v_star)
 
-    #sleep(0.001)
-    #println(x_history[j])
-    if j==3
-        print("First: ")
-        println(x_history[j])
-    end
-    if j==vars.iters
+    """sleep(0.001)
+    println(res.x[j])
+    if j==Iters
         print("Final ans: ")
-        println(x_history[j])
-    end
-    return x_history, v_history
+        println(res.x[j])
+    end"""
 end
 
-function update_params(j, gamma_history, mu_history)
-    lambda = 1/(j-0.5) + 0.5
-    append!(gamma_history, [generate_random(vars.epsilon, vars.I)])
-    append!(mu_history, [generate_random(vars.epsilon, vars.K)])
-
-    return lambda, gamma_history, mu_history
+function update_params(j)
+    append!(vars.gamma_history, [generate_random(epsilon, functions_I)])
+    append!(vars.mu_history, [generate_random(epsilon, functions_K)])
 end
 
 function delete_task(ind, birth, vars)
@@ -291,4 +283,17 @@ function add_task(task, ind, j, i, vars)
     push!(vars.birthdates[ind], j)
     push!(vars.task_number[ind], i)
     vars.tasks_num[ind] = vars.tasks_num[ind] + 1
+end
+
+function write(j)
+    mode = "a"
+    if j==1
+        mode = "w"
+    end
+    open("x1.txt",mode) do io
+        println(io,res.x[j][1])
+    end
+    open("x2.txt",mode) do io
+        println(io,res.x[j][2])
+    end
 end
