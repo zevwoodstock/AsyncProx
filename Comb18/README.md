@@ -21,6 +21,8 @@ OR
 7.  prox_plot.ipynb
 8.  test.jl
 9.  sync.jl
+10. start_repl.sh
+11. run_async.sh
 
 # Tasks to be implemented:
 1.  Show the running statistics
@@ -95,3 +97,11 @@ OR
 
 9.  sync.jl
     >A program that can work out the same optimisation problem synchronously.
+
+10. start_repl.sh
+    >A bash script file that opens the Julia REPL.
+    >Be sure to edit this scipt and replace my Julia path with yours.
+
+11. run_async.sh
+    >A bash script file that runs the asynchronous version of the algorithm if you run it from the terminal inside this directory.
+    >Be sure to edit this scipt and replace my Julia path with yours.
