@@ -16,9 +16,11 @@ include("optimisation_problem.jl")
 include("variables.jl")
 include("loop.jl")
 
+println()
 print("Final ans: ")
 println(res.x[iters])
 
+println(check_feasibility())
+println()
 #things left to do 
 #plot
-#feasibilty, func vals

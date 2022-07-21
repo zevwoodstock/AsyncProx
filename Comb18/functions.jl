@@ -2,7 +2,7 @@ using LinearAlgebra
 using ProximalOperators
 using Random
 
-function rearrange(L::Vector{Vector{Vector}}, vars)
+function rearrange(L::Vector{Vector{Vector}})
     L_star::Vector{Vector{Vector}} = []
     temp = []
     for i in 1:functions_I
@@ -19,7 +19,7 @@ function rearrange(L::Vector{Vector{Vector}}, vars)
     return L_star
 end
 
-function rearrange(L::Vector{Vector{Int64}}, vars)
+function rearrange(L::Vector{Vector{Int64}})
     L_star::Vector{Vector{Int64}} = []
     temp::Vector{Int64} = []
     for i in 1:functions_I
@@ -36,7 +36,7 @@ function rearrange(L::Vector{Vector{Int64}}, vars)
     return L_star
 end
 
-function rearrange(mat::Matrix, vars)
+function rearrange(mat::Matrix)
     return mat'
 end
 
@@ -44,7 +44,7 @@ end
 global norm_function = SqrNormL2(1)
 
 
-function linear_operator_sum(function_array::Vector{Vector}, x, tr, vars)
+function linear_operator_sum(function_array::Vector{Vector}, x, tr)
     n = length(x)
     sum = [0, 0]
     ind = 1
@@ -58,7 +58,7 @@ function linear_operator_sum(function_array::Vector{Vector}, x, tr, vars)
     return sum
 end
 
-function linear_operator_sum(weights::Vector{Int64},x, tr, vars)                   
+function linear_operator_sum(weights::Vector{Int64},x, tr)                   
     global s = zeros(size(x[1], 1))
     for i in 1:size(x, 1)
         global s = s+weights[i]*x[i]
@@ -66,7 +66,7 @@ function linear_operator_sum(weights::Vector{Int64},x, tr, vars)
     return s
 end
 
-function linear_operator_sum(mat::Matrix, x, tr, vars)
+function linear_operator_sum(mat::Matrix, x, tr)
     n = length(x)
     sum = [0;0]
     for i in 1:n
@@ -87,11 +87,11 @@ function generate_random(epsilon, ind)
     return arr
 end
 
-function get_L(mat::AbstractMatrix, ind, vars)
+function get_L(mat::AbstractMatrix, ind)
     return mat[ind*dims-1:ind*dims, :]
 end
 
-function get_L(vect::Vector, ind, vars)
+function get_L(vect::Vector, ind)
     return vect[ind]
 end
 
@@ -164,16 +164,16 @@ function compute(j, ind)
                     vars.a[task], y = fetch(vars.running_tasks[1][birth])
                     vars.a_star[task] = (res.x[j][task]-vars.a[task])./vars.gamma_history[j][task] - vars.l_star[task]
                 end
-                delete_task(ind, birth, vars)
+                delete_task(ind, birth)
             #else
             #    birth = birth+1
             #end
             
             if ind==2
-                vars.t[task] = vars.b[task] - linear_operator_sum(get_L(L, task, vars), vars.a, false, vars)
+                vars.t[task] = vars.b[task] - linear_operator_sum(get_L(L, task), vars.a, false)
                 vars.sum_k[task] = (norm_function(vars.t[task]))*2
             else
-                vars.t_star[task] = vars.a_star[task] + linear_operator_sum(get_L(rearrange(L ,vars), task, vars), vars.b_star, true, vars)
+                vars.t_star[task] = vars.a_star[task] + linear_operator_sum(get_L(rearrange(L), task), vars.b_star, true)
                 vars.sum_i[task] = (norm_function(vars.t_star[task]))*2
             end
         else
@@ -192,26 +192,26 @@ function define_tasks(j)
     #schedule a new task in each iteration for each i in I, and append it to the running tasks vector
     for i in 1:functions_I
         #if (j==1) || (minibatches[1][j%2+1][i]==1) 
-            vars.l_star[i] = linear_operator_sum(get_L(rearrange(L, vars), i, vars), res.v_star[j], true, vars)
+            vars.l_star[i] = linear_operator_sum(get_L(rearrange(L), i), res.v_star[j], true)
             delay = 0
             if i==1
                 delay = 0
             end
             local task = @task custom_prox(delay,functions[i], res.x[j][i]-vars.l_star[i]*vars.gamma_history[j][i] ,vars.gamma_history[j][i])
-            add_task(task, 1, j, i, vars)
+            add_task(task, 1, j, i)
         #end
     end
 
     for k in 1:functions_K
         #if (j==1)  || (minibatches[2][j%2+1][k]==1)
-            vars.l[k] = linear_operator_sum(get_L(L, k, vars), res.x[j], false, vars)
+            vars.l[k] = linear_operator_sum(get_L(L, k), res.x[j], false)
             delay = 0
             if k==1
                 delay = 0
             end
 
             local task = @task custom_prox(delay, functions[functions_I+k], vars.l[k] + vars.mu_history[j][k]*res.v_star[j][k], vars.mu_history[j][k])
-            add_task(task, 2, j, k, vars)
+            add_task(task, 2, j, k)
         #end
     end
 end
@@ -270,14 +270,14 @@ function update_params(j)
     append!(vars.mu_history, [generate_random(epsilon, functions_K)])
 end
 
-function delete_task(ind, birth, vars)
+function delete_task(ind, birth)
     deleteat!(vars.running_tasks[ind], birth)
     deleteat!(vars.birthdates[ind], birth)
     deleteat!(vars.task_number[ind], birth)
     vars.tasks_num[ind] = vars.tasks_num[ind] - 1
 end
 
-function add_task(task, ind, j, i, vars)
+function add_task(task, ind, j, i)
     schedule(task)
     push!(vars.running_tasks[ind], task)
     push!(vars.birthdates[ind], j)
@@ -296,4 +296,20 @@ function write(j)
     open("x2.txt",mode) do io
         println(io,res.x[j][2])
     end
+end
+
+function check_feasibility()
+    feasible = true
+    for i in 1:functions_I
+        if(functions[i](res.x[iters][i])==Inf)
+            feasible = false
+        end
+    end
+
+    for k in 1:functions_K
+        if(functions[functions_I + k](linear_operator_sum(get_L(L, k), res.x[iters], false))==Inf)
+            feasible = false
+        end
+    end
+    return feasible
 end
