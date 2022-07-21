@@ -17,7 +17,7 @@ OR
 3.  variables.jl
 4.  functions.jl
 5.  loop.jl
-6.  x1.txt, x2.txt
+6.  x.txt, x1.txt, x2.txt
 7.  prox_plot.ipynb
 8.  test.jl
 9.  sync.jl
@@ -83,8 +83,9 @@ OR
     >The file that runs the loop over the desired number of iterations\
     >It calls the functions in functions.jl from the body of the for loop
 
-6.  x1.txt, x2.txt
-    >The values of x that have been exported from the Julia file
+6.  x.txt, x1.txt, x2.txt
+    >The values of x that have been exported from the Julia file\
+    >x.txt is the result of the synchronous version and x1.txt/x2.txt are the results of the asynchronous version
 
 7.  prox_plot.ipynb
     >A jupyter notebook to plot the iteration curves for x.
