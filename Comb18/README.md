@@ -36,7 +36,7 @@ OR
 
 # Brief Description of the files
 1. main.jl
-    >It is the main file which connects every other file. It imports the content of the other julia files.
+    >It is the main file which connects every other file. It imports the content of the other julia files.\
     >It contains:
 
     1. D - The delay after which every unfinished task is to be forcibly fetched
@@ -49,16 +49,16 @@ OR
     
 
 2. optimisation_problem.jl
-    >This is the file that contains the functions we have to optimise.
-    >The functions to be optimised are initialised here, and then stored in a vector of functions known as functions[].
+    >This is the file that contains the functions we have to optimise.\
+    >The functions to be optimised are initialised here, and then stored in a vector of functions known as functions[].\
     >The L matrix is also initialised here, in either of the 3 forms as mentioned above.
 
 3.  variables.jl
-    >This is the file that initialises all the temporary variables into a struct known as variables, and the solution variables into a struct known as result. 
+    >This is the file that initialises all the temporary variables into a struct known as variables, and the solution variables into a struct known as result. \
     >It initialises every temporary variable to either a zero array or an empty array, as per the need.
 
 4.  functions.jl
-    >This is the file that contains all the helper functions needed to carry out the optimisation.
+    >This is the file that contains all the helper functions needed to carry out the optimisation.\
     >The functions contained are:
     1. rearrange(L) - Shifts the rows and columns of L
     2. norm_function() - Finds the L2 norm of a vector
@@ -80,7 +80,7 @@ OR
     18. check_feasibility() - Returns a simple true or false based on the feasibility of the returned solution. 
 
 5.  loop.jl
-    >The file that runs the loop over the desired number of iterations
+    >The file that runs the loop over the desired number of iterations\
     >It calls the functions in functions.jl from the body of the for loop
 
 6.  x1.txt, x2.txt
