@@ -290,12 +290,17 @@ function write(j)
     if j==1
         mode = "w"
     end
-    open("x1.txt",mode) do io
-        println(io,res.x[j][1])
+    for i in 1:dims
+        open("x" * string(i,base = 10) * ".txt",mode) do io
+            println(io,res.x[j][i])
+        end
     end
-    open("x2.txt",mode) do io
-        println(io,res.x[j][2])
-    end
+    # open("x1.txt",mode) do io
+    #     println(io,res.x[j][1])
+    # end
+    # open("x2.txt",mode) do io
+    #     println(io,res.x[j][2])
+    # end
 end
 
 function check_feasibility()
