@@ -1,3 +1,13 @@
+using LinearAlgebra
+using ProximalOperators
+using Random
+
+
+global functions_I = 2
+global functions_K = 5
+
+global dims_I = [2,2]
+global dims_K = [2,2,2,2,2]
 
 global functions = []
 
@@ -30,7 +40,7 @@ global L_function = [  [[identity_function, identity_function], [zero_function, 
                 ]
 
 for i in 1:functions_I+functions_K-3
-    append!(functions, [Precompose(IndBallL2(1.0), Matrix(LinearAlgebra.I, dims,dims), 1, -centers[i])])
+    append!(functions, [Precompose(IndBallL2(1.0), Matrix(LinearAlgebra.I, 2,2), 1, -centers[i])])
 end 
 
 
