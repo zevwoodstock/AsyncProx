@@ -2,7 +2,10 @@ using LinearAlgebra
 using ProximalOperators
 using Random
 
+
+
 function rearrange(L::Vector{Vector{Vector}})
+    # println("1")
     L_star::Vector{Vector{Vector}} = []
     temp = []
     for i in 1:functions_I
@@ -19,7 +22,28 @@ function rearrange(L::Vector{Vector{Vector}})
     return L_star
 end
 
+function rearrange(L::Vector{Vector{Matrix{Float64}}})
+    # println("yeah")
+    L_star::Vector{Vector{Matrix}} = []
+    temp = []
+    for i in 1:functions_I
+        for k in 1:functions_K
+            new_matrix = L[k][i]'
+            # println(new_matrix)
+            push!(temp, new_matrix)
+        end
+    end
+    for i in 1:functions_I
+        push!(L_star, [])
+        for k in 1:functions_K
+            push!(L_star[i], temp[functions_K*(i-1) + k])
+        end
+    end
+    return L_star
+end
+
 function rearrange(L::Vector{Vector{Int64}})
+    # println("3")
     L_star::Vector{Vector{Int64}} = []
     temp::Vector{Int64} = []
     for i in 1:functions_I
@@ -37,6 +61,7 @@ function rearrange(L::Vector{Vector{Int64}})
 end
 
 function rearrange(mat::Matrix)
+    # println("4")
     return mat'
 end
 
@@ -79,6 +104,40 @@ function linear_operator_sum(mat::Matrix, x, tr)
     return sum
 end
 
+function matrix_dot_product(v::Vector{Matrix}, u::Vector{Vector{Float64}})
+    ans =  v[1]*reshape(u[1], length(u[1]), 1)
+    ans*=0
+    # println("ans = ", ans)
+    n = length(v)
+    for i in 1:n
+        v1 = v[i]
+        u1 = u[i]
+        m = length(u1)
+        column_vec = reshape(u1, m, 1)
+        matrix_product = v1 * column_vec
+        ans = ans + matrix_product
+    end
+    # println("ans is ", ans)
+    return vec(ans)
+end
+
+function matrix_dot_product(v::Vector{Matrix{Float64}}, u::Vector{Vector{Float64}})
+    ans =  v[1]*reshape(u[1], length(u[1]), 1)
+    ans*=0
+    # println("ans = ", ans)
+    n = length(v)
+    for i in 1:n
+        v1 = v[i]
+        u1 = u[i]
+        m = length(u1)
+        column_vec = reshape(u1, m, 1)
+        matrix_product = v1 * column_vec
+        ans = ans + matrix_product
+    end
+    # println("ans is ", ans)
+    return vec(ans)
+end
+
 function generate_random(epsilon, ind)
     arr = []
     for i in 1:ind
@@ -95,44 +154,44 @@ function get_L(vect::Vector, ind)
     return vect[ind]
 end
 
-# function get_minibatch(j)
-# #generate a random vector and its complement random vector. the random vector selects the I's in the jth iteration,
-#     #and the complement vector selects the I's in the (j+1)th iteration. This was, all I's are covered every two iterations
-#     minibatches = [[],[]]
-#     if j%2==0
-#         minibatches = [get_bitvector_pair(j, functions_I), get_bitvector_pair(j+1, functions_K)]
-#     end
-#     return minibatches
-# end
+function get_minibatch(j)
+#generate a random vector and its complement random vector. the random vector selects the I's in the jth iteration,
+    #and the complement vector selects the I's in the (j+1)th iteration. This was, all I's are covered every two iterations
+    minibatches = [[],[]]
+    if j%2==0
+        minibatches = [get_bitvector_pair(j, functions_I), get_bitvector_pair(j+1, functions_K)]
+    end
+    return minibatches
+end
 
-# function get_bitvector_pair(iter, ind)
-#     random_bitvector = bitrand(MersenneTwister(iter), ind)
-#     empty_flag = false
-#     ones_flag = false
-#     for index in 1:ind
-#         if random_bitvector[index]==1
-#             empty_flag = true
-#         end
-#     end
-#     for index in 1:ind
-#         if random_bitvector[index]==0
-#             ones_flag = true
-#         end
-#     end
+function get_bitvector_pair(iter, ind)
+    random_bitvector = bitrand(MersenneTwister(iter), ind)
+    empty_flag = false
+    ones_flag = false
+    for index in 1:ind
+        if random_bitvector[index]==1
+            empty_flag = true
+        end
+    end
+    for index in 1:ind
+        if random_bitvector[index]==0
+            ones_flag = true
+        end
+    end
 
-#     if empty_flag==false
-#         random_bitvector[1] = 1
-#     end
-#     if ones_flag==false
-#         random_bitvector[1] = 0
-#     end
+    if empty_flag==false
+        random_bitvector[1] = 1
+    end
+    if ones_flag==false
+        random_bitvector[1] = 0
+    end
 
-#     complement_bitvector = []
-#     for index in 1:ind
-#         append!(complement_bitvector, [abs(1-random_bitvector[index])])
-#     end
-#     return [random_bitvector, complement_bitvector]
-# end
+    complement_bitvector = []
+    for index in 1:ind
+        append!(complement_bitvector, [abs(1-random_bitvector[index])])
+    end
+    return [random_bitvector, complement_bitvector]
+end
 
 function check_task_delay(j)
     #Checking if a task has been delayed for too long
@@ -171,10 +230,10 @@ function compute(j, ind)
             #end
             
             if ind==2
-                vars.t[task] = vars.b[task] - linear_operator_sum(get_L(L, task), vars.a, false)
+                vars.t[task] = vars.b[task] - matrix_dot_product(get_L(L, task), vars.a)
                 vars.sum_k[task] = (norm_function(vars.t[task]))*2               
             else
-                vars.t_star[task] = vars.a_star[task] + linear_operator_sum(get_L(rearrange(L), task), vars.b_star, true)
+                vars.t_star[task] = vars.a_star[task] +  matrix_dot_product(get_L(rearrange(L), task), vars.b_star)
                 vars.sum_i[task] = (norm_function(vars.t_star[task]))*2
             end
         else
@@ -189,11 +248,10 @@ function custom_prox(t, f, y, gamma)
     return a,b
 end
 
-function define_tasks(j)     ## no change required hopefully for the generalisation of n dimensions
+function define_tasks(j)    
     #schedule a new task in each iteration for each i in I, and append it to the running tasks vector
     for i in 1:functions_I                  # future change  - incorporate blocks into this, right now running over entire I
-        #if (j==1) || (minibatches[1][j%2+1][i]==1) 
-            vars.l_star[i] = linear_operator_sum(get_L(rearrange(L), i), res.v_star[j], true)
+            vars.l_star[i] = matrix_dot_product(get_L(rearrange(L), i), res.v_star[j])
             
             ###### doubt - what is the use of this delay thing ######
             delay = 0
@@ -208,7 +266,7 @@ function define_tasks(j)     ## no change required hopefully for the generalisat
 
     for k in 1:functions_K
         #if (j==1)  || (minibatches[2][j%2+1][k]==1)
-            vars.l[k] = linear_operator_sum(get_L(L, k), res.x[j], false)
+            vars.l[k] = matrix_dot_product(get_L(L, k), res.x[j])
             delay = 0
             if k==1
                 delay = 0
@@ -317,7 +375,7 @@ function check_feasibility()
     end
 
     for k in 1:functions_K
-        if(functions[functions_I + k](linear_operator_sum(get_L(L, k), res.x[iters], false))==Inf)
+        if(functions[functions_I + k](matrix_dot_product(get_L(L, k), res.x[iters]))==Inf)
             feasible = false
         end
     end
