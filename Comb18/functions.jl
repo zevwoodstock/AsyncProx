@@ -3,6 +3,22 @@ using ProximalOperators
 using Random
 
 
+function get_block_cyclic(n::Int64, m::Int64 = 20, M::Int64 = 5)
+    block_size = div(m, M)
+    start = ((n - 1) * block_size) % m + 1
+    fin = start + block_size - 1
+
+    if n % M == 0
+        fin = max(fin, m)
+    end
+
+    arr = Int64[]
+    for i in start:fin
+        push!(arr, i)
+        # println(arr)
+    end
+    return arr
+end
 
 function rearrange(L::Vector{Vector{Vector}})
     # println("1")
@@ -154,44 +170,44 @@ function get_L(vect::Vector, ind)
     return vect[ind]
 end
 
-function get_minibatch(j)
-#generate a random vector and its complement random vector. the random vector selects the I's in the jth iteration,
-    #and the complement vector selects the I's in the (j+1)th iteration. This was, all I's are covered every two iterations
-    minibatches = [[],[]]
-    if j%2==0
-        minibatches = [get_bitvector_pair(j, functions_I), get_bitvector_pair(j+1, functions_K)]
-    end
-    return minibatches
-end
+# function get_minibatch(j)
+# #generate a random vector and its complement random vector. the random vector selects the I's in the jth iteration,
+#     #and the complement vector selects the I's in the (j+1)th iteration. This was, all I's are covered every two iterations
+#     minibatches = [[],[]]
+#     if j%2==0
+#         minibatches = [get_bitvector_pair(j, functions_I), get_bitvector_pair(j+1, functions_K)]
+#     end
+#     return minibatches
+# end
 
-function get_bitvector_pair(iter, ind)
-    random_bitvector = bitrand(MersenneTwister(iter), ind)
-    empty_flag = false
-    ones_flag = false
-    for index in 1:ind
-        if random_bitvector[index]==1
-            empty_flag = true
-        end
-    end
-    for index in 1:ind
-        if random_bitvector[index]==0
-            ones_flag = true
-        end
-    end
+# function get_bitvector_pair(iter, ind)
+#     random_bitvector = bitrand(MersenneTwister(iter), ind)
+#     empty_flag = false
+#     ones_flag = false
+#     for index in 1:ind
+#         if random_bitvector[index]==1
+#             empty_flag = true
+#         end
+#     end
+#     for index in 1:ind
+#         if random_bitvector[index]==0
+#             ones_flag = true
+#         end
+#     end
 
-    if empty_flag==false
-        random_bitvector[1] = 1
-    end
-    if ones_flag==false
-        random_bitvector[1] = 0
-    end
+#     if empty_flag==false
+#         random_bitvector[1] = 1
+#     end
+#     if ones_flag==false
+#         random_bitvector[1] = 0
+#     end
 
-    complement_bitvector = []
-    for index in 1:ind
-        append!(complement_bitvector, [abs(1-random_bitvector[index])])
-    end
-    return [random_bitvector, complement_bitvector]
-end
+#     complement_bitvector = []
+#     for index in 1:ind
+#         append!(complement_bitvector, [abs(1-random_bitvector[index])])
+#     end
+#     return [random_bitvector, complement_bitvector]
+# end
 
 function check_task_delay(j)
     #Checking if a task has been delayed for too long
@@ -211,12 +227,10 @@ function check_task_delay(j)
 end
 
 function compute(j, ind)
-    # change to be done - once we introduce blocks we need to incorporate the i belonging to I but not I_n step
     birth = 1
     while birth<= vars.tasks_num[ind]
         if istaskdone(vars.running_tasks[ind][birth]) == true
             task = vars.task_number[ind][birth]
-            #if (j==1)||(minibatches[ind][j%2+1][task]==1)
                 if ind==2
                     vars.b[task],y = fetch(vars.running_tasks[ind][birth])
                     vars.b_star[task] = res.v_star[j][task] + (vars.l[task]-vars.b[task])./vars.mu_history[j][task]
@@ -225,10 +239,7 @@ function compute(j, ind)
                     vars.a_star[task] = (res.x[j][task]-vars.a[task])./vars.gamma_history[j][task] - vars.l_star[task]
                 end
                 delete_task(ind, birth)
-            #else
-            #    birth = birth+1
-            #end
-            
+        
             if ind==2
                 vars.t[task] = vars.b[task] - matrix_dot_product(get_L(L, task), vars.a)
                 vars.sum_k[task] = (norm_function(vars.t[task]))*2               
@@ -250,7 +261,7 @@ end
 
 function define_tasks(j)    
     #schedule a new task in each iteration for each i in I, and append it to the running tasks vector
-    for i in 1:functions_I                  # future change  - incorporate blocks into this, right now running over entire I
+    for i in I_n                  # change  - incorporated blocks into this, now running over entire I_n
             vars.l_star[i] = matrix_dot_product(get_L(rearrange(L), i), res.v_star[j])
             
             ###### doubt - what is the use of this delay thing ######
@@ -264,7 +275,7 @@ function define_tasks(j)
         #end
     end
 
-    for k in 1:functions_K
+    for k in K_n
         #if (j==1)  || (minibatches[2][j%2+1][k]==1)
             vars.l[k] = matrix_dot_product(get_L(L, k), res.x[j])
             delay = 0
@@ -329,6 +340,9 @@ end
 
 function update_params(j)
     # change required - make the choosing of gamma and mu random
+    # check if this change needs to be done - when appending to the gamma history array, we need to input the ind in generate random corresponding to I_n, 
+    # right now it is functions_I cause there are no blocks; basically we need to generate lambda and mu for the i which belong to the block I_n however, 
+    # it doesn't harm if it is generated for all i in I
     append!(vars.gamma_history, [generate_random(epsilon, functions_I)])
     append!(vars.mu_history, [generate_random(epsilon, functions_K)])
 end
