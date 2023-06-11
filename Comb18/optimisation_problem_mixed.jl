@@ -1,13 +1,14 @@
 using LinearAlgebra
 using ProximalOperators
 using Random
-
+include("functions.jl")
 
 global functions_I = 3
 global functions_K = 5
 
 global dims_I = [2,2, 3]
 global dims_K = [2,2,2,2,3]
+global block_function = get_block_cyclic
 
 global functions = []
 
