@@ -5,10 +5,11 @@ using Random
 
 function get_block_cyclic(n::Int64, m::Int64 = 20, M::Int64 = 5)
     block_size = div(m, M)
-    start = ((n - 1) * block_size) % m + 1
+    start = (((n%M) - 1) * block_size) % m + 1
     fin = start + block_size - 1
 
     if n % M == 0
+        start = ((M - 1)* block_size)%m + 1
         fin = max(fin, m)
     end
 
@@ -170,44 +171,44 @@ function get_L(vect::Vector, ind)
     return vect[ind]
 end
 
-# function get_minibatch(j)
-# #generate a random vector and its complement random vector. the random vector selects the I's in the jth iteration,
-#     #and the complement vector selects the I's in the (j+1)th iteration. This was, all I's are covered every two iterations
-#     minibatches = [[],[]]
-#     if j%2==0
-#         minibatches = [get_bitvector_pair(j, functions_I), get_bitvector_pair(j+1, functions_K)]
-#     end
-#     return minibatches
-# end
+function get_minibatch(j)
+#generate a random vector and its complement random vector. the random vector selects the I's in the jth iteration,
+    #and the complement vector selects the I's in the (j+1)th iteration. This was, all I's are covered every two iterations
+    minibatches = [[],[]]
+    if j%2==0
+        minibatches = [get_bitvector_pair(j, functions_I), get_bitvector_pair(j+1, functions_K)]
+    end
+    return minibatches
+end
 
-# function get_bitvector_pair(iter, ind)
-#     random_bitvector = bitrand(MersenneTwister(iter), ind)
-#     empty_flag = false
-#     ones_flag = false
-#     for index in 1:ind
-#         if random_bitvector[index]==1
-#             empty_flag = true
-#         end
-#     end
-#     for index in 1:ind
-#         if random_bitvector[index]==0
-#             ones_flag = true
-#         end
-#     end
+function get_bitvector_pair(iter, ind)
+    random_bitvector = bitrand(MersenneTwister(iter), ind)
+    empty_flag = false
+    ones_flag = false
+    for index in 1:ind
+        if random_bitvector[index]==1
+            empty_flag = true
+        end
+    end
+    for index in 1:ind
+        if random_bitvector[index]==0
+            ones_flag = true
+        end
+    end
 
-#     if empty_flag==false
-#         random_bitvector[1] = 1
-#     end
-#     if ones_flag==false
-#         random_bitvector[1] = 0
-#     end
+    if empty_flag==false
+        random_bitvector[1] = 1
+    end
+    if ones_flag==false
+        random_bitvector[1] = 0
+    end
 
-#     complement_bitvector = []
-#     for index in 1:ind
-#         append!(complement_bitvector, [abs(1-random_bitvector[index])])
-#     end
-#     return [random_bitvector, complement_bitvector]
-# end
+    complement_bitvector = []
+    for index in 1:ind
+        append!(complement_bitvector, [abs(1-random_bitvector[index])])
+    end
+    return [random_bitvector, complement_bitvector]
+end
 
 function check_task_delay(j)
     #Checking if a task has been delayed for too long
@@ -262,6 +263,10 @@ end
 function define_tasks(j)    
     #schedule a new task in each iteration for each i in I, and append it to the running tasks vector
     for i in I_n                  # change  - incorporated blocks into this, now running over entire I_n
+            # println("j = ", j, "i = ", i)
+            # println(L)
+            # println(get_L(rearrange(L), i))
+            # println("v_star_j is ", res.v_star[j])
             vars.l_star[i] = matrix_dot_product(get_L(rearrange(L), i), res.v_star[j])
             
             ###### doubt - what is the use of this delay thing ######
@@ -277,6 +282,9 @@ function define_tasks(j)
 
     for k in K_n
         #if (j==1)  || (minibatches[2][j%2+1][k]==1)
+            # println("k = ", k)
+            # println(get_L(L, k))
+            # println("j = ", j, " & x[j] = ", res.x[j])
             vars.l[k] = matrix_dot_product(get_L(L, k), res.x[j])
             delay = 0
             if k==1
