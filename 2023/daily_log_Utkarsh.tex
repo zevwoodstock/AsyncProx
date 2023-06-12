@@ -277,9 +277,38 @@ height0.6pt}}
 \begin{itemize} 
 \item Studied @tasks in Julia (https://docs.julialang.org/en/v1/base/parallel/) to understand the syntax and rules for asynchronous programming in Julia.
 \item Wrote the algorithm for the `indices not inside block $I_n$' and added choosing a generic or specific block option in the code.
-\item 
 \end{itemize}
 
+\item {\bf June 6, 2023}:
+\begin{itemize} 
+\item Meet with our advisor about bugs found in previous code, changes and design decisions for generalising it to n-dimensions
+\item made a list of dimension sizes for each matrix in the code so as to fit the matrix products correctly for generalised dimensions
+\end{itemize}
+
+\item {\bf June 7, 2023}:
+\begin{itemize} 
+\item Worked with my project partner to fix bugs and write the code further
+\item Came up with two optimisation problems for testing:
+\begin{itemize}
+  \item For 2 dimensions with an added indicator for projecting the domain onto the diagonal subspace
+  \item For 3 dimensions - that can be worked out by hand
+\end{itemize}
+\end{itemize}
+
+\item {\bf June 9, 2023}:
+\begin{itemize} 
+\item Tested the code for a 3-dimensional optimisation problem - worked correctly
+\item Implemented an optimisation problem for $m = 3$ and $p = 5$ where $\mathcal{H}_1 = \mathcal{H}_2 = \mathbb{R}^2$, $\mathcal{H}_3 = \mathbb{R}^3$, $\mathscr{G}_1 = \mathscr{G}_2 = \mathscr{G}_3 = \mathscr{G}_4 = \mathbb{R}^2$ and $\mathscr{G}_5 = \mathbb{R}^3$. 
+\item Calculated the required answer for the above problem manually and compared it with the code to see that it matches.
+\item Implemented matrix $L$ and more required functions so that functions $g_k$ can now accept linear combinations of \textit{transformations} of $x_i$ rather than just linear combinations of $x_i$ as previously.
+\end{itemize}
+
+\item {\bf June 12, 2023}:
+\begin{itemize} 
+\item With my project partner, tested another optimisation problem in 3-dimensions to see that it works correctly.
+\item Fixed a bug in the default block generating function and tested problems with different parameters of block generation.
+\item Ensured that lags are no longer than $M$ in the default strategy, where $M$ can be adjusted in the cyclic block selection function.
+\end{itemize}
 
 \end{itemize}
 
