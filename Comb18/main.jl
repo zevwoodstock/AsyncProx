@@ -3,16 +3,20 @@ using ProximalOperators
 using Random
 
 #intialising our problem
-global functions_I = 2
-global functions_K = 4
-global dims = 2
+# global functions_I = 2    # m -  size of set I 
+# global functions_K = 5    # p -  size of set K
+# global dims = 2
+# global dims_I = [dims1,dims2,...,dimsI]
+# global dims_K = [dims1,dims2,...,dimsK]
+# global dims_I = [2,2]
+# global dims_K = [2,2,2,2]
 global D = 40
 global iters = 5000
 global epsilon = 0.5
 
 
 
-include("optimisation_problem.jl")
+include("optimisation_problem1.jl")
 include("variables.jl")
 include("loop.jl")
 

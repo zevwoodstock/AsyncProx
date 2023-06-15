@@ -2,7 +2,27 @@ using LinearAlgebra
 using ProximalOperators
 using Random
 
+
+function get_block_cyclic(n::Int64, m::Int64 = 20, M::Int64 = 5)
+    block_size = div(m, M)
+    start = (((n%M) - 1) * block_size) % m + 1
+    fin = start + block_size - 1
+
+    if n % M == 0
+        start = ((M - 1)* block_size)%m + 1
+        fin = max(fin, m)
+    end
+
+    arr = Int64[]
+    for i in start:fin
+        push!(arr, i)
+        # println(arr)
+    end
+    return arr
+end
+
 function rearrange(L::Vector{Vector{Vector}})
+    # println("1")
     L_star::Vector{Vector{Vector}} = []
     temp = []
     for i in 1:functions_I
@@ -19,7 +39,28 @@ function rearrange(L::Vector{Vector{Vector}})
     return L_star
 end
 
+function rearrange(L::Vector{Vector{Matrix{Float64}}})
+    # println("yeah")
+    L_star::Vector{Vector{Matrix}} = []
+    temp = []
+    for i in 1:functions_I
+        for k in 1:functions_K
+            new_matrix = L[k][i]'
+            # println(new_matrix)
+            push!(temp, new_matrix)
+        end
+    end
+    for i in 1:functions_I
+        push!(L_star, [])
+        for k in 1:functions_K
+            push!(L_star[i], temp[functions_K*(i-1) + k])
+        end
+    end
+    return L_star
+end
+
 function rearrange(L::Vector{Vector{Int64}})
+    # println("3")
     L_star::Vector{Vector{Int64}} = []
     temp::Vector{Int64} = []
     for i in 1:functions_I
@@ -37,6 +78,7 @@ function rearrange(L::Vector{Vector{Int64}})
 end
 
 function rearrange(mat::Matrix)
+    # println("4")
     return mat'
 end
 
@@ -77,6 +119,40 @@ function linear_operator_sum(mat::Matrix, x, tr)
         sum = sum + mat[:, i*dims-1:i*dims]*temp
     end
     return sum
+end
+
+function matrix_dot_product(v::Vector{Matrix}, u::Vector{Vector{Float64}})
+    ans =  v[1]*reshape(u[1], length(u[1]), 1)
+    ans*=0
+    # println("ans = ", ans)
+    n = length(v)
+    for i in 1:n
+        v1 = v[i]
+        u1 = u[i]
+        m = length(u1)
+        column_vec = reshape(u1, m, 1)
+        matrix_product = v1 * column_vec
+        ans = ans + matrix_product
+    end
+    # println("ans is ", ans)
+    return vec(ans)
+end
+
+function matrix_dot_product(v::Vector{Matrix{Float64}}, u::Vector{Vector{Float64}})
+    ans =  v[1]*reshape(u[1], length(u[1]), 1)
+    ans*=0
+    # println("ans = ", ans)
+    n = length(v)
+    for i in 1:n
+        v1 = v[i]
+        u1 = u[i]
+        m = length(u1)
+        column_vec = reshape(u1, m, 1)
+        matrix_product = v1 * column_vec
+        ans = ans + matrix_product
+    end
+    # println("ans is ", ans)
+    return vec(ans)
 end
 
 function generate_random(epsilon, ind)
@@ -156,7 +232,6 @@ function compute(j, ind)
     while birth<= vars.tasks_num[ind]
         if istaskdone(vars.running_tasks[ind][birth]) == true
             task = vars.task_number[ind][birth]
-            #if (j==1)||(minibatches[ind][j%2+1][task]==1)
                 if ind==2
                     vars.b[task],y = fetch(vars.running_tasks[ind][birth])
                     vars.b_star[task] = res.v_star[j][task] + (vars.l[task]-vars.b[task])./vars.mu_history[j][task]
@@ -165,15 +240,12 @@ function compute(j, ind)
                     vars.a_star[task] = (res.x[j][task]-vars.a[task])./vars.gamma_history[j][task] - vars.l_star[task]
                 end
                 delete_task(ind, birth)
-            #else
-            #    birth = birth+1
-            #end
-            
+        
             if ind==2
-                vars.t[task] = vars.b[task] - linear_operator_sum(get_L(L, task), vars.a, false)
-                vars.sum_k[task] = (norm_function(vars.t[task]))*2
+                vars.t[task] = vars.b[task] - matrix_dot_product(get_L(L, task), vars.a)
+                vars.sum_k[task] = (norm_function(vars.t[task]))*2               
             else
-                vars.t_star[task] = vars.a_star[task] + linear_operator_sum(get_L(rearrange(L), task), vars.b_star, true)
+                vars.t_star[task] = vars.a_star[task] +  matrix_dot_product(get_L(rearrange(L), task), vars.b_star)
                 vars.sum_i[task] = (norm_function(vars.t_star[task]))*2
             end
         else
@@ -188,23 +260,32 @@ function custom_prox(t, f, y, gamma)
     return a,b
 end
 
-function define_tasks(j)
+function define_tasks(j)    
     #schedule a new task in each iteration for each i in I, and append it to the running tasks vector
-    for i in 1:functions_I
-        #if (j==1) || (minibatches[1][j%2+1][i]==1) 
-            vars.l_star[i] = linear_operator_sum(get_L(rearrange(L), i), res.v_star[j], true)
+    for i in I_n                  # change  - incorporated blocks into this, now running over entire I_n
+            # println("j = ", j, "i = ", i)
+            # println(L)
+            # println(get_L(rearrange(L), i))
+            # println("v_star_j is ", res.v_star[j])
+            vars.l_star[i] = matrix_dot_product(get_L(rearrange(L), i), res.v_star[j])
+            
+            ###### doubt - what is the use of this delay thing ######
             delay = 0
             if i==1
                 delay = 0
             end
+            ####################
             local task = @task custom_prox(delay,functions[i], res.x[j][i]-vars.l_star[i]*vars.gamma_history[j][i] ,vars.gamma_history[j][i])
             add_task(task, 1, j, i)
         #end
     end
 
-    for k in 1:functions_K
+    for k in K_n
         #if (j==1)  || (minibatches[2][j%2+1][k]==1)
-            vars.l[k] = linear_operator_sum(get_L(L, k), res.x[j], false)
+            # println("k = ", k)
+            # println(get_L(L, k))
+            # println("j = ", j, " & x[j] = ", res.x[j])
+            vars.l[k] = matrix_dot_product(get_L(L, k), res.x[j])
             delay = 0
             if k==1
                 delay = 0
@@ -216,8 +297,8 @@ function define_tasks(j)
     end
 end
 
-function calc_theta(j)
-    lambda = 1/(j-0.5) + 0.5
+function calc_theta(j)   ## no change required hopefully
+    lambda = 1/(j-0.5) + 0.5     # design decision
     tau = 0
     for i in 1:functions_I
         tau = tau + vars.sum_i[i] 
@@ -266,6 +347,10 @@ function update_vars(j)
 end
 
 function update_params(j)
+    # change required - make the choosing of gamma and mu random
+    # check if this change needs to be done - when appending to the gamma history array, we need to input the ind in generate random corresponding to I_n, 
+    # right now it is functions_I cause there are no blocks; basically we need to generate lambda and mu for the i which belong to the block I_n however, 
+    # it doesn't harm if it is generated for all i in I
     append!(vars.gamma_history, [generate_random(epsilon, functions_I)])
     append!(vars.mu_history, [generate_random(epsilon, functions_K)])
 end
@@ -290,12 +375,17 @@ function write(j)
     if j==1
         mode = "w"
     end
-    open("x1.txt",mode) do io
-        println(io,res.x[j][1])
+    for i in 1:functions_I
+        open("x" * string(i,base = 10) * ".txt",mode) do io
+            println(io,res.x[j][i])
+        end
     end
-    open("x2.txt",mode) do io
-        println(io,res.x[j][2])
-    end
+    # open("x1.txt",mode) do io
+    #     println(io,res.x[j][1])
+    # end
+    # open("x2.txt",mode) do io
+    #     println(io,res.x[j][2])
+    # end
 end
 
 function check_feasibility()
@@ -307,7 +397,7 @@ function check_feasibility()
     end
 
     for k in 1:functions_K
-        if(functions[functions_I + k](linear_operator_sum(get_L(L, k), res.x[iters], false))==Inf)
+        if(functions[functions_I + k](matrix_dot_product(get_L(L, k), res.x[iters]))==Inf)
             feasible = false
         end
     end

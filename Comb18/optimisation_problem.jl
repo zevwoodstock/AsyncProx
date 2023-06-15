@@ -3,8 +3,11 @@ global functions = []
 
 centers = [[0,1], [0,1], [1,1], [1,1]]
 
-identity = [1 0;0 1]
-null_mat = [0 0;0 0]
+# identity = [1 0;0 1]
+# null_mat = [0 0;0 0]
+identity = Matrix(I, dims, dims)
+null_mat = zeros(dims, dims)
+
 global L_matrix = [identity null_mat; null_mat identity; identity null_mat; null_mat identity]
 
 identity_function(x) = x
