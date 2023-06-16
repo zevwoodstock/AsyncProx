@@ -9,6 +9,8 @@ global functions_K = 3
 global dims_I = [3]
 global dims_K = [3,3,3]
 global block_function = get_block_cyclic
+global generate_gamma = generate_gamma_seq
+global generate_mu = generate_mu_seq
 
 global functions = []
 
@@ -25,6 +27,3 @@ append!(functions, [Precompose(IndBallL2(1.0), Matrix(LinearAlgebra.I, 3,3), 1, 
 append!(functions, [Linear([0,1,1])])
 append!(functions, [Linear([1,1,0])])
 append!(functions, [Linear([1,0,1])])
-
-
-#solution should be x = [0.42,0.42,0.42]
