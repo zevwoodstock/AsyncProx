@@ -2,8 +2,7 @@ using LinearAlgebra
 using ProximalOperators
 using Random
 
-
-function get_block_cyclic(n::Int64, m::Int64 = 20, M::Int64 = 5)
+function get_block_cyclic(n::Int64, m::Int64 = 20, M::Int64 = 5) 
     block_size = div(m, M)
     start = (((n%M) - 1) * block_size) % m + 1
     fin = start + block_size - 1
@@ -155,12 +154,36 @@ function matrix_dot_product(v::Vector{Matrix{Float64}}, u::Vector{Vector{Float64
     return vec(ans)
 end
 
-function generate_random(epsilon, ind)
-    arr = []
-    for i in 1:ind
-        append!(arr, [1])
+function generate_gamma_constant(i,j)
+    return constant_g[i]
+end
+
+function generate_mu_constant(k,j)
+    return constant_m[k]
+end
+
+function generate_gamma_seq(i,j)
+    if j == 1
+        return 1/epsilon
+    else
+        if vars.gamma_history[j-1][i] == epsilon
+            return epsilon
+        else
+            return ((1/epsilon) - 0.1*(j-1))
+        end
     end
-    return arr
+end
+
+function generate_mu_seq(k,j)
+    if j == 1
+        return 1/epsilon
+    else
+        if vars.mu_history[j-1][k] == epsilon
+            return epsilon
+        else
+            return ((1/epsilon) - 0.1*(j-1))   # in future we can also set the subtraction constant different for different i and k using the constant arrays made in main.jl
+        end
+    end
 end
 
 function get_L(mat::AbstractMatrix, ind)
@@ -171,57 +194,23 @@ function get_L(vect::Vector, ind)
     return vect[ind]
 end
 
-function get_minibatch(j)
-#generate a random vector and its complement random vector. the random vector selects the I's in the jth iteration,
-    #and the complement vector selects the I's in the (j+1)th iteration. This was, all I's are covered every two iterations
-    minibatches = [[],[]]
-    if j%2==0
-        minibatches = [get_bitvector_pair(j, functions_I), get_bitvector_pair(j+1, functions_K)]
-    end
-    return minibatches
-end
-
-function get_bitvector_pair(iter, ind)
-    random_bitvector = bitrand(MersenneTwister(iter), ind)
-    empty_flag = false
-    ones_flag = false
-    for index in 1:ind
-        if random_bitvector[index]==1
-            empty_flag = true
-        end
-    end
-    for index in 1:ind
-        if random_bitvector[index]==0
-            ones_flag = true
-        end
-    end
-
-    if empty_flag==false
-        random_bitvector[1] = 1
-    end
-    if ones_flag==false
-        random_bitvector[1] = 0
-    end
-
-    complement_bitvector = []
-    for index in 1:ind
-        append!(complement_bitvector, [abs(1-random_bitvector[index])])
-    end
-    return [random_bitvector, complement_bitvector]
-end
-
 function check_task_delay(j)
     #Checking if a task has been delayed for too long
     if j>1
-        
         for b in 1:vars.tasks_num[1]
             if vars.birthdates[1][b]<j-D
                 newvals=fetch(vars.running_tasks[1][b])
+                task_no = vars.task_number[1][b]
+                vars.a[task_no] , y= newvals 
+                vars.a_star[task_no] = (res.x[j][task_no]-vars.a[task_no])./vars.gamma_history[j][task_no] - vars.l_star[task_no]
             end
         end
         for b in 1:vars.tasks_num[2]
             if vars.birthdates[2][b]<j-D
                 newvals=fetch(vars.running_tasks[2][b])
+                task_no = vars.task_number[2][b]
+                vars.b[task_no] , y= newvals 
+                vars.b_star[task_no] = res.v_star[j][task_no] + (vars.l[task_no]-vars.b[task_no])./vars.mu_history[j][task_no]
             end
         end
     end
@@ -263,37 +252,17 @@ end
 function define_tasks(j)    
     #schedule a new task in each iteration for each i in I, and append it to the running tasks vector
     for i in I_n                  # change  - incorporated blocks into this, now running over entire I_n
-            # println("j = ", j, "i = ", i)
-            # println(L)
-            # println(get_L(rearrange(L), i))
-            # println("v_star_j is ", res.v_star[j])
-            vars.l_star[i] = matrix_dot_product(get_L(rearrange(L), i), res.v_star[j])
-            
-            ###### doubt - what is the use of this delay thing ######
+            vars.l_star[i] = matrix_dot_product(get_L(rearrange(L), i), res.v_star[j]) 
             delay = 0
-            if i==1
-                delay = 0
-            end
-            ####################
             local task = @task custom_prox(delay,functions[i], res.x[j][i]-vars.l_star[i]*vars.gamma_history[j][i] ,vars.gamma_history[j][i])
             add_task(task, 1, j, i)
-        #end
     end
 
     for k in K_n
-        #if (j==1)  || (minibatches[2][j%2+1][k]==1)
-            # println("k = ", k)
-            # println(get_L(L, k))
-            # println("j = ", j, " & x[j] = ", res.x[j])
             vars.l[k] = matrix_dot_product(get_L(L, k), res.x[j])
             delay = 0
-            if k==1
-                delay = 0
-            end
-
             local task = @task custom_prox(delay, functions[functions_I+k], vars.l[k] + vars.mu_history[j][k]*res.v_star[j][k], vars.mu_history[j][k])
             add_task(task, 2, j, k)
-        #end
     end
 end
 
@@ -351,8 +320,16 @@ function update_params(j)
     # check if this change needs to be done - when appending to the gamma history array, we need to input the ind in generate random corresponding to I_n, 
     # right now it is functions_I cause there are no blocks; basically we need to generate lambda and mu for the i which belong to the block I_n however, 
     # it doesn't harm if it is generated for all i in I
-    append!(vars.gamma_history, [generate_random(epsilon, functions_I)])
-    append!(vars.mu_history, [generate_random(epsilon, functions_K)])
+    push!(vars.gamma_history, [])
+    push!(vars.mu_history, [])
+    for i in 1:functions_I
+        push!(vars.gamma_history[j], generate_gamma(i,j))
+    end
+    for k in 1:functions_K
+        push!(vars.mu_history[j], generate_mu(k,j))
+    end
+    # append!(vars.gamma_history, [generate_random(epsilon, functions_I)])
+    # append!(vars.mu_history, [generate_random(epsilon, functions_K)])
 end
 
 function delete_task(ind, birth)
