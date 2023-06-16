@@ -2,6 +2,10 @@ using LinearAlgebra
 using ProximalOperators
 using Random
 
+if L_function_bool == true
+    L = L_function
+end
+
 function get_block_cyclic(n::Int64, m::Int64 = 20, M::Int64 = 5) 
     block_size = div(m, M)
     start = (((n%M) - 1) * block_size) % m + 1
@@ -76,10 +80,32 @@ function rearrange(L::Vector{Vector{Int64}})
     return L_star
 end
 
+function rearrange(L::Vector{Vector{Function}})
+    L_star::Vector{Vector{Function}} = []
+    temp = []
+    for i in 1:functions_I
+        for k in 1:functions_K
+            new_matrix = L_star_function[k][i]
+            println(new_matrix)
+            push!(temp, new_matrix)
+        end
+    end
+    for i in 1:functions_I
+        push!(L_star, [])
+        for k in 1:functions_K
+            push!(L_star[i], temp[functions_K*(i-1) + k])
+        end
+    end
+    return L_star
+end
+
 function rearrange(mat::Matrix)
     # println("4")
     return mat'
 end
+
+
+
 
 #a function to find the L2 norm of a vector                       
 global norm_function = SqrNormL2(1)
@@ -148,6 +174,22 @@ function matrix_dot_product(v::Vector{Matrix{Float64}}, u::Vector{Vector{Float64
         m = length(u1)
         column_vec = reshape(u1, m, 1)
         matrix_product = v1 * column_vec
+        ans = ans + matrix_product
+    end
+    # println("ans is ", ans)
+    return vec(ans)
+end
+
+function matrix_dot_product(v::Vector{Function}, u::Vector{Vector{Float64}})
+    ans =  v[1](reshape(u[1], length(u[1]), 1))
+    ans*=0
+    n = length(v)
+    for i in 1:n
+        v1 = v[i]
+        u1 = u[i]
+        m = length(u1)
+        column_vec = reshape(u1, m, 1)
+        matrix_product = v1(column_vec)
         ans = ans + matrix_product
     end
     # println("ans is ", ans)
