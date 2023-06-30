@@ -86,7 +86,7 @@ function rearrange(L::Vector{Vector{Function}})
     for i in 1:functions_I
         for k in 1:functions_K
             new_matrix = L_star_function[k][i]
-            println(new_matrix)
+            # println(new_matrix)
             push!(temp, new_matrix)
         end
     end
