@@ -39,8 +39,8 @@ global theta = 1.0
 
 img_arr_1 = imageToVector(image_to_vector(path_1))
 img_arr_2 = imageToVector(image_to_vector(path_2))
-global z1,L1 = masking(row1,col1,img_arr_1)
-global z2,L2 = masking(row2,col2,img_arr_2)
+global z1 = masking(img_arr_1)
+global z2 = masking(img_arr_2)
 
 
 
@@ -78,10 +78,17 @@ w1 = generate_random_vector(N, 2.0)
 w2 = generate_random_vector(N, 2.0)
 
 # z1 = imageToVector(z1)
-z1 += w1
+# z1 += w1
+for i in 1:N
+    # println(typeof(z1))
+    z1[i] = z1[i] + w1[i]
+end
 
 # z2 = imageToVector(z2)
-z2 += w2
+# z2 += w2
+for i in 1:N
+    z2[i] = z2[i] + w2[i]
+end
 
 
 
@@ -160,7 +167,8 @@ global block_function = get_block_cyclic             #To be set by user
 global generate_gamma = generate_gamma_constant      #To be set by user
 global generate_mu = generate_mu_constant            #To be set by user
 
-append!(functions,[phi,phi])
+append!(functions,[Linear(mu_array)])
+append!(functions,[Linear(mu_array)])
 append!(functions,[Precompose(SqrNormL2(1/(sigma_1*sigma_1)),Matrix(LinearAlgebra.I, N,N),1,-z1)])
 append!(functions,[Precompose(SqrNormL2(1/(sigma_2*sigma_2)),Matrix(LinearAlgebra.I, N,N),1,-z2)])
 append!(functions,[SqrNormL2(theta)])
