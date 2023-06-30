@@ -105,6 +105,13 @@ function define_D(image::Vector{Float64})
     return imageToVector(image2)
 end
 
+function define_D(image::Matrix{Float64})
+    image = vec(image)
+    image1 = vectorToImage(row1,col1,image)
+    image2 = shift_image_left(image1,10)
+    return imageToVector(image2)
+end
+
 function shift_image_right(image::Matrix{Float64}, x::Int)
     width, height = size(image)
     shifted_image = similar(image)
@@ -125,6 +132,13 @@ function define_D_star(image::Vector{Float64})
     return imageToVector(image2)
 end
 
+function define_D_star(image::Matrix{Float64})
+    image = vec(image)
+    image1 = vectorToImage(row1,col1,image)
+    image2 = shift_image_right(image1,10)
+    return imageToVector(image2)
+end
+
 identity_function(x) = x
 
 function null_func(input_vector)
@@ -133,9 +147,9 @@ end
 
 
 
-global L_function =     [[masking, null_func], [null_func, masking], [identity_function, shift_image_left]]
+global L_function =     [[masking, null_func], [null_func, masking], [identity_function, define_D]]
 
-global L_star_function = [[masking, null_func], [null_func, masking], [identity_function, shift_image_right]]
+global L_star_function = [[masking, null_func], [null_func, masking], [identity_function, define_D_star]]
 global functions = []
 
 include("functions.jl")
