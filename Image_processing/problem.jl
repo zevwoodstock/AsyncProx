@@ -25,16 +25,16 @@ end
 global functions_I = 2
 global functions_K = 3
 
-global path_1 = "/Users/kashishgoel/Downloads/imagel.jpg"
-global path_2 = "/Users/kashishgoel/Downloads/imager.jpg"
+global path_1 = "/Users/HP/Documents/ZIB Internship/Image Recovery/L.jpeg"
+global path_2 = "/Users/HP/Documents/ZIB Internship/Image Recovery/R.jpeg"
 
 global row1,col1 = get_row_column(path_1)
 global row2,col2 = get_row_column(path_2)
 
 global N = row1*col1
 
-global sigma_1 = 2.0
-global sigma_2 = 2.0
+global sigma_1 = 0.01
+global sigma_2 = 0.01
 global theta = 1.0
 
 img_arr_1 = imageToVector(image_to_vector(path_1))
@@ -56,12 +56,11 @@ function phi(x)
     # Perform discrete wavelet transform
     y = dwt(x, wavelet(WT.sym4))
     
-    # Define Linear operator with mu as coefficients
-    linear_op = LinearOperator(mu_array)
+    # Define Linear operator with mu as coefficients ie Linear(c[]) = < . | c[]>
+    linear_op = Linear(mu_array)
     
     # Apply linear operator to y
-    result = linear_op * y
-    
+    result = linear_op(y)
     return result
 end
 
@@ -74,8 +73,8 @@ function generate_random_vector(N, sigma)
     return random_vector
 end
 
-w1 = generate_random_vector(N, 2.0)
-w2 = generate_random_vector(N, 2.0)
+w1 = generate_random_vector(N, sigma_1)
+w2 = generate_random_vector(N, sigma_2)
 
 # z1 = imageToVector(z1)
 # z1 += w1
@@ -90,8 +89,6 @@ for i in 1:N
     z2[i] = z2[i] + w2[i]
 end
 
-
-
 function shift_image_left(image::Matrix{Float64}, x::Int64)
     width, height = size(image)
     shifted_image = similar(image)
@@ -99,23 +96,22 @@ function shift_image_left(image::Matrix{Float64}, x::Int64)
     for y = 1:height
         for i = 1:width
             j = mod(i - x - 1, width) + 1
-            shifted_image[i, y] = image[j, y]
+            shifted_image[y, i] = image[y, j]
         end
     end
-
     return -shifted_image
 end
 
 function define_D(image::Vector{Float64})
     image1 = vectorToImage(row1,col1,image)
-    image2 = shift_image_left(image1,10)
+    image2 = shift_image_left(image1,5)
     return imageToVector(image2)
 end
 
 function define_D(image::Matrix{Float64})
     image = vec(image)
     image1 = vectorToImage(row1,col1,image)
-    image2 = shift_image_left(image1,10)
+    image2 = shift_image_left(image1,5)
     return imageToVector(image2)
 end
 
@@ -126,7 +122,7 @@ function shift_image_right(image::Matrix{Float64}, x::Int)
     for y = 1:height
         for i = 1:width
             j = mod(i + x + 1, width) + 1
-            shifted_image[i, y] = image[j, y]
+            shifted_image[y, i] = image[y, j]
         end
     end
 
@@ -135,14 +131,14 @@ end
 
 function define_D_star(image::Vector{Float64})
     image1 = vectorToImage(row1,col1,image)
-    image2 = shift_image_right(image1,10)
+    image2 = shift_image_right(image1,5)
     return imageToVector(image2)
 end
 
 function define_D_star(image::Matrix{Float64})
     image = vec(image)
     image1 = vectorToImage(row1,col1,image)
-    image2 = shift_image_right(image1,10)
+    image2 = shift_image_right(image1,5)
     return imageToVector(image2)
 end
 
@@ -151,8 +147,6 @@ identity_function(x) = x
 function null_func(input_vector)
     return zeros(eltype(input_vector), length(input_vector))
 end
-
-
 
 global L_function =     [[masking, null_func], [null_func, masking], [identity_function, define_D]]
 
@@ -167,13 +161,10 @@ global block_function = get_block_cyclic             #To be set by user
 global generate_gamma = generate_gamma_constant      #To be set by user
 global generate_mu = generate_mu_constant            #To be set by user
 
-append!(functions,[Linear(mu_array)])
-append!(functions,[Linear(mu_array)])
-append!(functions,[Precompose(SqrNormL2(1/(sigma_1*sigma_1)),Matrix(LinearAlgebra.I, N,N),1,-z1)])
-append!(functions,[Precompose(SqrNormL2(1/(sigma_2*sigma_2)),Matrix(LinearAlgebra.I, N,N),1,-z2)])
+append!(functions,[phi])
+append!(functions,[phi])
+# append!(functions,[SqrNormL2(theta)])
+# append!(functions,[SqrNormL2(theta)])
+append!(functions,[Precompose(SqrNormL2(1/(sigma_1*sigma_1)),1,1,-z1)])
+append!(functions,[Precompose(SqrNormL2(1/(sigma_2*sigma_2)),1,1,-z2)])
 append!(functions,[SqrNormL2(theta)])
-
-
-# append!(functions, [Precompose(IndBallL2(1.0), Matrix(LinearAlgebra.I, 2,2), 1, -centers[i])])
-#solution should be x1 = [0, 1x] , x2 =[0.5, 0.134] and x3 = [0.73, 0.47, 0.2]
-#modified
