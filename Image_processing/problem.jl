@@ -7,7 +7,6 @@ using Wavelets
 
 global L_function_bool = true  #Set this to be true if you want to input L as a Matrix of functions. Need to declare adjoint functions below:
 
-
 # include("functions.jl")
 include("masking.jl")
 
@@ -33,24 +32,21 @@ global row2,col2 = get_row_column(path_2)
 
 global N = row1*col1
 
-global sigma_1 = 0.01
-global sigma_2 = 0.01
-global theta = 1.0
+global sigma_1 = 0.1
+global sigma_2 = 0.1
+global theta = 1
 
 img_arr_1 = imageToVector(image_to_vector(path_1))
 img_arr_2 = imageToVector(image_to_vector(path_2))
-global z1 = masking(img_arr_1)
-global z2 = masking(img_arr_2)
 
-
+global z1 = masking_l(img_arr_1)
+global z2 = masking_r(img_arr_2)
 
 function constant_vector(N, c)
     return fill(c, N)
 end
 
 global mu_array = constant_vector(N,1)
-
-
 
 function phi(x)
     # Perform discrete wavelet transform
@@ -148,10 +144,17 @@ function null_func(input_vector)
     return zeros(eltype(input_vector), length(input_vector))
 end
 
-global L_function =     [[masking, null_func], [null_func, masking], [identity_function, define_D]]
+global L_function =     [[masking_l, null_func], [null_func, masking_r], [identity_function, define_D]]
 
-global L_star_function = [[masking, null_func], [null_func, masking], [identity_function, define_D_star]]
+global L_star_function = [[masking_l, null_func], [null_func, masking_r], [identity_function, define_D_star]]
 global functions = []
+
+degraded_image_left = matrix_to_image(vectorToImage(row1,col1,z1))
+degraded_path_l = "/Users/HP/Documents/ZIB Internship/Image Recovery/degraded_image_left.jpeg"  # Replace with the desired path and filename for the image
+save(degraded_path_l, degraded_image_left)
+degraded_image_right = matrix_to_image(vectorToImage(row1,col1,z2))
+degraded_path_r = "/Users/HP/Documents/ZIB Internship/Image Recovery/degraded_image_right.jpeg"  # Replace with the desired path and filename for the image
+save(degraded_path_r, degraded_image_right)
 
 include("functions.jl")
 
@@ -160,6 +163,9 @@ global dims_K = [N,N,N]
 global block_function = get_block_cyclic             #To be set by user
 global generate_gamma = generate_gamma_constant      #To be set by user
 global generate_mu = generate_mu_constant            #To be set by user
+
+res.x[1][1] = z1
+res.x[1][2] = z2
 
 append!(functions,[phi])
 append!(functions,[phi])
