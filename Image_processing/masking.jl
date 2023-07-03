@@ -19,16 +19,17 @@ function image_to_vector(img_path)
     return gray_matrix
 end
 
-function masking(x1::Vector{Float64})
+function masking_left(x1::Vector{Float64})
     row = row1
     column = col1
     x = vectorToImage(row,column,x1)
     iter = rand(1:row)
+    global row_array_left = []
     n = length(x)
     L::Matrix{Float64} = ones(row,column)
     for i in 1:iter 
-        row_i = rand(1:row)
-        j = row_i
+        row_i = rand(50:90)
+        push!(row_array_left,row_i )
         for j in 1:column
             L[(j-1)*row + row_i] = 0.0
             x[(j-1)*row + row_i] = 0.0
@@ -37,17 +38,90 @@ function masking(x1::Vector{Float64})
     return imageToVector(x)
 end
 
-function masking(x1::Matrix{Float64})
+
+function masking_right(x1::Vector{Float64})
+    row = row1
+    column = col1
+    x = vectorToImage(row,column,x1)
+    iter = rand(1:row)
+    global row_array_right = []
+    n = length(x)
+    L::Matrix{Float64} = ones(row,column)
+    for i in 1:iter 
+        row_i = rand(140:180)
+        push!(row_array_right, row_i)
+        for j in 1:column
+            L[(j-1)*row + row_i] = 0.0
+            x[(j-1)*row + row_i] = 0.0
+        end
+    end
+    return imageToVector(x)
+end
+
+
+
+function masking_r(x1::Vector{Float64})
+    row = row1
+    column = col1
+    x = vectorToImage(row,column,x1)
+    iter = length(row_array_right)
+    n = length(x)
+    L::Matrix{Float64} = ones(row,column)
+    for i in 1:iter 
+        row_i = row_array_right[i]
+        for j in 1:column
+            L[(j-1)*row + row_i] = 0.0
+            x[(j-1)*row + row_i] = 0.0
+        end
+    end
+    return imageToVector(x)
+end
+
+function masking_r(x1::Matrix{Float64})
     row = row1
     column = col1
     x2 = vec(x1)
     x = vectorToImage(row,column, x2)
-    iter = rand(1:row)
+    iter = length(row_array_right )
     n = length(x)
     L::Matrix{Float64} = ones(row,column)
     for i in 1:iter 
-        row_i = rand(1:row)
-        j = row_i
+        row_i = row_array_right[i]
+        for j in 1:column
+            L[(j-1)*row + row_i] = 0.0
+            x[(j-1)*row + row_i] = 0.0
+        end
+    end
+    return imageToVector(x)
+end
+
+function masking_l(x1::Vector{Float64})
+    row = row1
+    column = col1
+    x = vectorToImage(row,column,x1)
+    iter = length(row_array_left)
+    n = length(x)
+    L::Matrix{Float64} = ones(row,column)
+    for i in 1:iter 
+        row_i = row_array_left[i]
+        for j in 1:column
+            L[(j-1)*row + row_i] = 0.0
+            x[(j-1)*row + row_i] = 0.0
+        end
+    end
+    return imageToVector(x)
+end
+
+function masking_l(x1::Matrix{Float64})
+    row = row1
+    column = col1
+    x2 = vec(x1)
+    x = vectorToImage(row,column, x2)
+    iter = length(row_array_left )
+    n = length(x)
+    L::Matrix{Float64} = ones(row,column)
+    for i in 1:iter 
+        row_i = row_array_left[i]
         for j in 1:column
             L[(j-1)*row + row_i] = 0.0
             x[(j-1)*row + row_i] = 0.0
