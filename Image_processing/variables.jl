@@ -1,3 +1,6 @@
+include("problem.jl")
+
+
 struct variables
     a::Vector{Vector{Float64}}
     a_star::Vector{Vector{Float64}}
@@ -55,3 +58,8 @@ vars = variables(   zeros_I,
 
 res = result(   [zeros_I],
                 [zeros_K])
+
+if randomize_initial == true
+    res.x[1][1] = w_1
+    res.x[1][2] = w_2
+end
