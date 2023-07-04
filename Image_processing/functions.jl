@@ -285,15 +285,19 @@ function compute(j, ind)
     end
 end
 
-function soft_threshold(x::Vector{Float64}, lambda::Float64)
-    return sign.(x) .* max.(abs.(x) .- lambda, 0)
+function soft_threshold(x::Vector{Float64}, gamma::Float64)
+    return sign.(x) .* max.(abs.(x) .- gamma, 0)
 end
 
 function custom_prox(t, f, y, gamma)
     sleep(t)
     if f == phi
         dwt = Wavelets.dwt(y, wavelet(WT.sym4))
-        st = soft_threshold(dwt, 1.0)
+		#This step assumes that mu_array is constant. mu_array is
+		#the constant of coefficients of the l1 norm in the imaging
+		#problem. Increasing that coefficient effectively increases
+		#the parameter of the prox.
+		st = soft_threshold(dwt, gamma*mu_array[1])
         idwt = Wavelets.idwt(st, wavelet(WT.sym4))
         return idwt, phi(idwt)
     end
