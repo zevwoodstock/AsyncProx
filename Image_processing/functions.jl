@@ -285,8 +285,18 @@ function compute(j, ind)
     end
 end
 
+function soft_threshold(x::Vector{Float64}, lambda::Float64)
+    return sign.(x) .* max.(abs.(x) .- lambda, 0)
+end
+
 function custom_prox(t, f, y, gamma)
     sleep(t)
+    if f == phi
+        dwt = Wavelets.dwt(y, wavelet(WT.sym4))
+        st = soft_threshold(dwt, 1.0)
+        idwt = Wavelets.idwt(st, wavelet(WT.sym4))
+        return idwt, phi(idwt)
+    end
     a,b = prox(f,y,gamma)
     return a,b
 end
