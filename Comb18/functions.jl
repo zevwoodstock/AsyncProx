@@ -1,27 +1,21 @@
 using LinearAlgebra
 using ProximalOperators
 using Random
+using Wavelets
 
 if L_function_bool == true
     L = L_function
 end
 
-function get_block_cyclic(n::Int64, m::Int64 = 20, M::Int64 = 5) 
-    block_size = div(m, M)
-    start = (((n%M) - 1) * block_size) % m + 1
-    fin = start + block_size - 1
-
-    if n % M == 0
-        start = ((M - 1)* block_size)%m + 1
-        fin = max(fin, m)
+function phi(x)
+    y = Wavelets.dwt(x, wavelet(WT.sym4))
+    n = length(y)
+    for i in 1:n
+        y[i] = abs(y[i])
     end
-
-    arr = Int64[]
-    for i in start:fin
-        push!(arr, i)
-        # println(arr)
-    end
-    return arr
+    linear_op = Linear(mu_array)
+    result = linear_op(y)
+    return result
 end
 
 function rearrange(L::Vector{Vector{Vector}})
@@ -86,7 +80,7 @@ function rearrange(L::Vector{Vector{Function}})
     for i in 1:functions_I
         for k in 1:functions_K
             new_matrix = L_star_function[k][i]
-            println(new_matrix)
+            # println(new_matrix)
             push!(temp, new_matrix)
         end
     end
@@ -196,13 +190,7 @@ function matrix_dot_product(v::Vector{Function}, u::Vector{Vector{Float64}})
     return vec(ans)
 end
 
-function generate_gamma_constant(i,j)
-    return constant_g[i]
-end
 
-function generate_mu_constant(k,j)
-    return constant_m[k]
-end
 
 function generate_gamma_seq(i,j)
     if j == 1
@@ -285,8 +273,19 @@ function compute(j, ind)
     end
 end
 
+function soft_threshold(x::Vector{Float64}, lambda::Float64)
+    return sign.(x) .* max.(abs.(x) .- lambda, 0)
+end
+
+
 function custom_prox(t, f, y, gamma)
     sleep(t)
+    if f == phi
+        dwt = Wavelets.dwt(y, wavelet(WT.sym4))
+        st = soft_threshold(dwt, 1.0)
+        idwt = Wavelets.idwt(st, wavelet(WT.sym4))
+        return idwt, phi(idwt)
+    end
     a,b = prox(f,y,gamma)
     return a,b
 end
@@ -394,17 +393,13 @@ function write(j)
     if j==1
         mode = "w"
     end
+    store_x[j] = Vector{Vector{Float64}}(undef, functions_I)
     for i in 1:functions_I
+        store_x[j][i] = res.x[j][i]
         open("x" * string(i,base = 10) * ".txt",mode) do io
             println(io,res.x[j][i])
         end
     end
-    # open("x1.txt",mode) do io
-    #     println(io,res.x[j][1])
-    # end
-    # open("x2.txt",mode) do io
-    #     println(io,res.x[j][2])
-    # end
 end
 
 function check_feasibility()
@@ -421,4 +416,25 @@ function check_feasibility()
         end
     end
     return feasible
+end
+
+function record()
+    if record_residual == true
+        for j in 2:iters
+            temp = []
+            for i in 1:functions_I
+                push!(temp, SqrNormL2(1)(store_x[j][i] - store_x[j-1][i]))
+            end
+            push!(x_residuals, temp)
+        end
+    end
+    if record_dist == true
+        for j in 1:iters
+            temp1 = []
+            for i in 1:functions_I
+                push!(temp1, NormL2(1)(store_x[j][i] - final_ans[i]))
+            end
+            push!(dist_to_minima, temp1)
+        end
+    end
 end
