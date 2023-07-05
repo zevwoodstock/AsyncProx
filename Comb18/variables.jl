@@ -33,8 +33,6 @@ for i in 1:functions_K                     # I believe this is already generalis
     append!(zeros_K, [zeros(dims_K[i])])
 end
 
-println(zeros_I)
-println(zeros_K)
 
 vars = variables(   zeros_I, 
                     zeros_I, 
@@ -54,5 +52,10 @@ vars = variables(   zeros_I,
                     []
                     )
 
-res = result(   [zeros_I],
-                [zeros_K])
+res = result( [zeros_I], [zeros_K])
+
+global store_x = Vector{Vector{Vector{Float64}}}(undef, iters)
+
+global x_residuals = Vector{Vector{Float64}}([])
+global f_values = []
+global dist_to_minima = Vector{Vector{Float64}}([])
