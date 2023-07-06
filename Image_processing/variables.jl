@@ -63,3 +63,16 @@ if randomize_initial == true
     res.x[1][1] = w_1
     res.x[1][2] = w_2
 end
+
+
+global store_x = Vector{Vector{Vector{Float64}}}(undef, iters)
+global store_v = Vector{Vector{Vector{Float64}}}(undef, iters)
+
+global prox_call = []
+for i in 1:functions_I+functions_K
+    push!(prox_call,0)
+end
+
+global x_residuals = Vector{Vector{Float64}}([])
+global f_values = []
+global dist_to_minima = Vector{Vector{Float64}}([])
