@@ -33,7 +33,23 @@ global N = row1*col1
 
 global sigma_1 = 0.1
 global sigma_2 = 0.1
-global theta = 100
+global theta = 10
+
+
+global randomize_initial = true                      # this bool must be set to true if you want to randomize the intiial vector
+#record_residual = 1 for storing ||x_{n+1} - x_n||^2
+global compute_epoch_bool = true
+global record_residual = false
+global record_func = true
+global record_dist = false
+
+# the variable record_method indicates the type of variable you wish to use for the x_axis
+# "0" is used for plotting against the number of iterations
+# "1" is used for plotting against the epoch number
+# "2" is used to plot against the number of prox calla
+# "3" is used to plot against the wall clock time
+global record_method = "1"      
+global final_ans                                                    # to be declared for finding the various statistic values
 
 img_arr_1 = imageToVector(image_to_vector(path_1))
 img_arr_2 = imageToVector(image_to_vector(path_2))
@@ -45,7 +61,10 @@ function constant_vector(N, c)
     return fill(c, N)
 end
 
-global mu_array = constant_vector(N,10000)
+global mu_array = constant_vector(N,10)
+
+# global epoch_found = false
+# global epoch = 0
 
 function phi(x)
     y = Wavelets.dwt(x, wavelet(WT.sym4))
@@ -72,7 +91,7 @@ global norm_function = SqrNormL2(1)
 w1 = generate_random_vector(N, sigma_1)
 w2 = generate_random_vector(N, sigma_2)
 
-global randomize_initial = true                      # this bool must be set to true if you want to randomize the intiial vector
+
 w_1 = generate_random_vector(N,1)
 norm_w1 = norm_function(w_1)*2
 w_1 = w_1/norm_w1
@@ -152,10 +171,10 @@ function null_func(input_vector)
 end
 
 global L_function =     [[masking_l, null_func], [null_func, masking_r], [identity_function, define_D]]
-# global L_function = [[identity_function , null_func], [null_func, identity_function], [identity_function, define_D]]
+# global L_function = [[identity_function , null_func], [null_func, identity_function], [identity_function, define_D]]        #for no masking
 
 global L_star_function = [[masking_l, null_func], [null_func, masking_r], [identity_function, define_D_star]]
-# global L_star_function = [[identity_function, null_func], [null_func, identity_function], [identity_function, define_D_star]]
+# global L_star_function = [[identity_function, null_func], [null_func, identity_function], [identity_function, define_D_star]]    # for no masking
 global functions = []
 
 degraded_image_left = matrix_to_image(vectorToImage(row1,col1,z1))
@@ -173,13 +192,8 @@ global block_function = get_block_cyclic             #To be set by user
 global generate_gamma = generate_gamma_constant      #To be set by user
 global generate_mu = generate_mu_constant            #To be set by user
 
-# res.x[1][1] = z1
-# res.x[1][2] = z2
-
 append!(functions,[phi])
 append!(functions,[phi])
-# append!(functions,[SqrNormL2(theta)])
-# append!(functions,[SqrNormL2(theta)])
 append!(functions,[Precompose(SqrNormL2(1/(sigma_1*sigma_1)),1,1,-z1)])
 append!(functions,[Precompose(SqrNormL2(1/(sigma_2*sigma_2)),1,1,-z2)])
 append!(functions,[SqrNormL2(theta)])
