@@ -104,12 +104,8 @@ function rearrange(mat::Matrix)
     return mat'
 end
 
-
-
-
 #a function to find the L2 norm of a vector                       
 global norm_function = SqrNormL2(1)
-
 
 function linear_operator_sum(function_array::Vector{Vector}, x, tr)
     n = length(x)
@@ -311,6 +307,7 @@ function define_tasks(j)
             vars.l_star[i] = matrix_dot_product(get_L(rearrange(L), i), res.v_star[j]) 
             delay = 0
             local task = @task custom_prox(delay,functions[i], res.x[j][i]-vars.l_star[i]*vars.gamma_history[j][i] ,vars.gamma_history[j][i])
+            prox_call[i] = 1
             add_task(task, 1, j, i)
     end
 
@@ -318,6 +315,7 @@ function define_tasks(j)
             vars.l[k] = matrix_dot_product(get_L(L, k), res.x[j])
             delay = 0
             local task = @task custom_prox(delay, functions[functions_I+k], vars.l[k] + vars.mu_history[j][k]*res.v_star[j][k], vars.mu_history[j][k])
+            prox_call[functions_I+k] = 1
             add_task(task, 2, j, k)
     end
 end
@@ -408,17 +406,17 @@ function write(j)
     if j==1
         mode = "w"
     end
+    store_x[j] = Vector{Vector{Float64}}(undef, functions_I)
+    store_v[j] = Vector{Vector{Float64}}(undef, functions_K)
     for i in 1:functions_I
+        store_x[j][i] = res.x[j][i]
         open("x" * string(i,base = 10) * ".txt",mode) do io
             println(io,res.x[j][i])
         end
     end
-    # open("x1.txt",mode) do io
-    #     println(io,res.x[j][1])
-    # end
-    # open("x2.txt",mode) do io
-    #     println(io,res.x[j][2])
-    # end
+    for k in 1:functions_K
+        store_v[j][k] = matrix_dot_product(get_L(L, k), res.x[j])
+    end
 end
 
 function check_feasibility()
@@ -436,3 +434,83 @@ function check_feasibility()
     end
     return feasible
 end
+
+function compute_epoch()
+    # if epoch_found == false
+        for i in 1:functions_I+functions_K
+            if prox_call[i] == 0
+                return false
+            end
+        end
+        return true
+    # end        
+end
+
+function record()
+    if record_method == "0"
+        if record_residual == true
+            for j in 2:iters
+                temp = []
+                for i in 1:functions_I
+                    push!(temp, SqrNormL2(1)(store_x[j][i] - store_x[j-1][i]))
+                end
+                push!(x_residuals, temp)
+            end
+        end
+        if record_dist == true
+            for j in 1:iters
+                temp1 = []
+                for i in 1:functions_I
+                    push!(temp1, NormL2(1)(store_x[j][i] - final_ans[i]))
+                end
+                push!(dist_to_minima, temp1)
+            end
+        end
+        if record_func == true
+            for j in 1:iters
+                sum = 0
+                for i in 1:functions_I
+                    sum+= functions[i](store_x[j][i])
+                end
+                for k in 1:functions_K
+                    sum+= functions[functions_I+k](store_v[j][k])
+                end
+                push!(f_values, sum)
+            end
+        end
+    end
+    if record_method == "1"
+        if record_residual == true
+            for j in epoch_array
+                if j != 1
+                    temp = []
+                    for i in 1:functions_I
+                        push!(temp, SqrNormL2(1)(store_x[j][i] - store_x[j-1][i]))
+                    end
+                    push!(x_residuals, temp)
+                end
+            end
+        end
+        if record_dist == true
+            for j in epoch_array
+                temp1 = []
+                for i in 1:functions_I
+                    push!(temp1, NormL2(1)(store_x[j][i] - final_ans[i]))
+                end
+                push!(dist_to_minima, temp1)
+            end
+        end
+        if record_func == true
+            for j in epoch_array
+                sum = 0
+                for i in 1:functions_I
+                    sum+= functions[i](store_x[j][i])
+                end
+                for k in 1:functions_K
+                    sum+= functions[functions_I+k](store_v[j][k])
+                end
+                push!(f_values, sum)
+            end
+        end
+    end
+end     
