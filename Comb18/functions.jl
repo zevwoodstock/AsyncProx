@@ -394,11 +394,15 @@ function write(j)
         mode = "w"
     end
     store_x[j] = Vector{Vector{Float64}}(undef, functions_I)
+    store_v[j] = Vector{Vector{Float64}}(undef, functions_K)
     for i in 1:functions_I
         store_x[j][i] = res.x[j][i]
         open("x" * string(i,base = 10) * ".txt",mode) do io
             println(io,res.x[j][i])
         end
+    end
+    for k in 1:functions_K
+        store_v[j][k] = matrix_dot_product(get_L(L, k), res.x[j])
     end
 end
 
@@ -437,4 +441,16 @@ function record()
             push!(dist_to_minima, temp1)
         end
     end
-end
+    if record_func == true
+        for j in 1:iters
+            sum = 0
+            for i in 1:functions_I
+                sum+= functions[i](store_x[j][i])
+            end
+            for k in 1:functions_K
+                sum+= functions[functions_I+k](store_v[j][k])
+            end
+            push!(f_values, sum)
+        end
+    end
+end     
