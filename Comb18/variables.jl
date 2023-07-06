@@ -55,7 +55,7 @@ vars = variables(   zeros_I,
 res = result( [zeros_I], [zeros_K])
 
 global store_x = Vector{Vector{Vector{Float64}}}(undef, iters)
-
+global store_v = Vector{Vector{Vector{Float64}}}(undef, iters)
 global x_residuals = Vector{Vector{Float64}}([])
 global f_values = []
 global dist_to_minima = Vector{Vector{Float64}}([])
