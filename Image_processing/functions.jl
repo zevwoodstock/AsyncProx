@@ -288,13 +288,14 @@ end
 function custom_prox(t, f, y, gamma)
     sleep(t)
     if f == phi
-        dwt = Wavelets.dwt(y, wavelet(WT.db8))
+        dwt = Wavelets.dwt(y, wavelet(WT.sym4))
 		#This step assumes that mu_array is constant. mu_array is
 		#the constant of coefficients of the l1 norm in the imaging
 		#problem. Increasing that coefficient effectively increases
 		#the parameter of the prox.
 		st = soft_threshold(dwt, gamma*mu_array[1])
-        idwt = Wavelets.idwt(st, wavelet(WT.db8))
+        # st = soft_threshold(dwt, 1.0)
+        idwt = Wavelets.idwt(st, wavelet(WT.sym4))
         return idwt, phi(idwt)
     end
     a,b = prox(f,y,gamma)
