@@ -38,7 +38,6 @@ function masking_left(x1::Vector{Float64})
     return imageToVector(x)
 end
 
-
 function masking_right(x1::Vector{Float64})
     row = row1
     column = col1
@@ -57,8 +56,6 @@ function masking_right(x1::Vector{Float64})
     end
     return imageToVector(x)
 end
-
-
 
 function masking_r(x1::Vector{Float64})
     row = row1
@@ -130,9 +127,28 @@ function masking_l(x1::Matrix{Float64})
     return imageToVector(x)
 end
 
-
 function matrix_to_image(X::Matrix{Float64})
     gray_image = Gray.(X)
     image = Gray.(clamp.(gray_image, 0, 1))  # Ensure pixel values are between 0 and 1
     return image
+end
+
+function blur(img::Vector{Float64})
+    img = vectorToImage(row1, col1, img)
+    img_blurred = imfilter(img, Kernel.gaussian(3.0))
+    # img_blurred = imfilter(img, Kernel.gaussian((3, 3), 0.5))
+    # img_blurred = imfilter(img, Kernel.gaussian(3, 3, 0.5))
+
+    # println(typeof(img_blurred))
+    return imageToVector(img_blurred);  
+end
+
+function blur(img::Matrix{Float64})
+    img = vec(img)
+    img = vectorToImage(row1, col1, img)
+    img_blurred = imfilter(img, Kernel.gaussian(3.0))
+    # img_blurred = imfilter(img, Kernel.gaussian((3, 3), 0.5))
+    # img_blurred = imfilter(img, Kernel.gaussian(3, 3, 0.5))
+    # println(typeof(img_blurred))
+    return imageToVector(img_blurred);  
 end
