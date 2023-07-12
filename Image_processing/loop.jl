@@ -3,6 +3,7 @@ include("problem.jl")
 
 global epoch_found = false
 global epoch_array = []
+global prox_count_array = []
 
 for j in 1:iters
     println("j = ",j)
@@ -16,6 +17,8 @@ for j in 1:iters
     calc_theta(j)
     write(j)
     update_vars(j)
+    push!(prox_count_array,prox_call_count)
+
     if compute_epoch_bool == true
         # if epoch_found == false
         if compute_epoch()
@@ -28,5 +31,5 @@ for j in 1:iters
         # end
     end
 end
-
+# println(phi(res.x[iters]))
 record()
