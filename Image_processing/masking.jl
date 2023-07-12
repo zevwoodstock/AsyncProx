@@ -133,11 +133,12 @@ function matrix_to_image(X::Matrix{Float64})
     return image
 end
 
+global sigma_blur = 3.0
+
 function blur(img::Vector{Float64})
     img = vectorToImage(row1, col1, img)
-    img_blurred = imfilter(img, Kernel.gaussian(3.0))
-    # img_blurred = imfilter(img, Kernel.gaussian((3, 3), 0.5))
-    # img_blurred = imfilter(img, Kernel.gaussian(3, 3, 0.5))
+    kernel = reflect(Kernel.gaussian((sigma_blur,sigma_blur), (3,3)))
+    img_blurred = imfilter(img, kernel, Fill(0))
 
     # println(typeof(img_blurred))
     return imageToVector(img_blurred);  
@@ -146,7 +147,8 @@ end
 function blur(img::Matrix{Float64})
     img = vec(img)
     img = vectorToImage(row1, col1, img)
-    img_blurred = imfilter(img, Kernel.gaussian(3.0))
+    kernel = reflect(Kernel.gaussian((sigma_blur,sigma_blur), (3,3)))
+    img_blurred = imfilter(img, kernel, Fill(0))
     # img_blurred = imfilter(img, Kernel.gaussian((3, 3), 0.5))
     # img_blurred = imfilter(img, Kernel.gaussian(3, 3, 0.5))
     # println(typeof(img_blurred))
