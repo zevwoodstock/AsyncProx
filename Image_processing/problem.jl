@@ -21,7 +21,7 @@ function vectorToImage(rows::Int64, columns::Int64, vector::Vector{T}) where {T}
 end
 
 # global path_1 = "/Users/kashishgoel/Downloads/imagel.jpg"
-global path_1 = "/Users/kashishgoel/Desktop/Intern_2023/Image_processing/image_left.jpeg"
+global path_1 = "/Users/kashishgoel/Downloads/imagel.jpg"
 global path_2 = "/Users/kashishgoel/Downloads/imager.jpg" 
 
 img_arr_1 = imageToVector(image_to_vector(path_1))
@@ -35,10 +35,9 @@ global row2,col2 = get_row_column(path_2)
 
 global N = row1*col1
 
-global sigma_1 = 0.1
-global sigma_2 = 0.1
-global theta = 1
-
+global sigma_1 = 0.01
+global sigma_2 = 0.01
+global theta_main = 0.1
 global randomize_initial = false                      # this bool must be set to true if you want to randomize the intiial vector
 global initialize_with_zi = true                      # this bool must be set to true if you want to initialize the initial vector with the defected images itself
 #record_residual = 1 for storing ||x_{n+1} - x_n||^2
@@ -58,11 +57,10 @@ global final_ans = [imageToVector(image_to_vector(path_1)), imageToVector(image_
 function constant_vector(N, c)
     return fill(c, N)
 end
-
-global mu_array = constant_vector(N,1.0)
+global mu_array = constant_vector(N,0.1)
 
 function phi(x)
-    y = Wavelets.dwt(x, wavelet(WT.db8))
+    y = Wavelets.dwt(x, wavelet(WT.sym4))
     n = length(y)
     for i in 1:n
         y[i] = abs(y[i])
@@ -86,11 +84,11 @@ global norm_function = SqrNormL2(1)
 w1 = generate_random_vector(N, sigma_1)
 w2 = generate_random_vector(N, sigma_2)
 
-# global z1 = copy(img_arr_1)
-# global z2 = copy(img_arr_2)
+global z1 = copy(img_arr_1)
+global z2 = copy(img_arr_2)
 
-global z1 = blur(img_arr_1)
-global z2 = blur(img_arr_2)
+# global z1 = blur(img_arr_1)
+# global z2 = blur(img_arr_2)
 
 w_1 = generate_random_vector(N,1)
 norm_w1 = norm_function(w_1)*2
@@ -107,6 +105,8 @@ for i in 1:N
     z2[i] = z2[i] + w2[i]
 end
 
+z1 = blur(z1)
+z2 = blur(z2)
 # z1 = masking_left(z1)
 # z2 = masking_right(z2)
 
@@ -190,11 +190,11 @@ include("functions.jl")
 global dims_I = [N,N]
 global dims_K = [N,N,N]
 global block_function = get_block_cyclic             #To be set by user
-global generate_gamma = generate_gamma_constant      #To be set by user
+global generate_gamma = generate_gamma_seq      #To be set by user
 global generate_mu = generate_mu_constant            #To be set by user
 
 append!(functions,[phi])
 append!(functions,[phi])
 append!(functions,[Precompose(SqrNormL2(1/(sigma_1*sigma_1)),1,1,-z1)])
 append!(functions,[Precompose(SqrNormL2(1/(sigma_2*sigma_2)),1,1,-z2)])
-append!(functions,[SqrNormL2(theta)])
+append!(functions,[SqrNormL2(theta_main)])
