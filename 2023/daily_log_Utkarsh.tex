@@ -354,9 +354,119 @@ height0.6pt}}
 \begin{itemize} 
 \item Read about the different kinds of wavelet bases and their functions.
 \item Read \cite{ImageRecoveryPCombettes} with special attention to 5.1.1 i.e. our example problem for spectroscopic image recovery.
-\item 
 \end{itemize}
 
+\item {\bf June 22, 2023}:
+\begin{itemize} 
+\item Finished reading \cite{ImageRecoveryPCombettes}.
+\item Implemented shift function with looping over the edges.
+\end{itemize}
+
+\item {\bf June 23, 2023}:
+\begin{itemize} 
+\item Created a ``difference'' function that would combine a weighted sum of pixel differences to give a score to $x_1$, $x_2$ to see how close two images are.
+\end{itemize}
+
+\item {\bf June 26, 2023}:
+\begin{itemize} 
+\item Varied the shift of the disparity matrix $D$, and at each iteration, stored the score function to see which score gives us the best approximation of $x_1$ = $Dx_2 + \nu$
+\item Stored the shift value with the best `score' as our D operator. 
+\end{itemize}
+
+\item {\bf June 27, 2023}:
+\begin{itemize} 
+\item Calculated the adjoint of D to be shift in the opposite direction.
+\item Realised that the score function does not give an actual good representation of the closeness between our current stereoscopic images and we would need to compute the shift by eyeballing.
+\end{itemize}
+
+\item {\bf June 28, 2023}:
+\begin{itemize} 
+\item Meet with our advisor.
+\item Wrote up our formulation on the image recovery problem in latex to get it reviewed.
+\end{itemize}
+
+\item {\bf June 29, 2023}:
+\begin{itemize} 
+\item Implemented Phi function and its Proximal Operator.
+\item Debugged randomised masking.
+\end{itemize}
+
+\item {\bf June 30, 2023}:
+\begin{itemize} 
+\item Created helper functions over every Image Recovery Function that deal only in terms of $x \in \RR^N$ where $N = rows \cdot columns$.
+\item Completed the image recovery problem in code.
+\end{itemize}
+
+\item {\bf July 3, 2023}:
+\begin{itemize} 
+\item Ran tests in the image recovery problem, varying $\mu$, $\vartheta$.
+\item Observed that masking in one image is seen as the true image value in second image leading to corresponding rows masked in the second recovered image too.
+\item Checked that varying $\vartheta$ indeed increased the coupled masking as we would expect.
+\item Meet with Advisor to discuss the same.
+\end{itemize}
+
+\item {\bf June 4, 2023}:
+\begin{itemize} 
+\item Set the initial vectors to be $\mathcal{N}(0, 0.1)$ distributed.
+\item Increased the weights of the $\phi$ terms to see difference in the results.
+\end{itemize}
+
+\item {\bf July 5, 2023}:
+\begin{itemize} 
+\item Changed the prox function for phi to hope to see an improvement in the recovery of images with masking as a degradation operator.
+\item Tried to find bugs by manually iterating through the algorithm steps.
+\end{itemize}
+
+\item {\bf July 6, 2023}:
+\begin{itemize} 
+\item Meet with our advisor. Discussed possibilities for masking recovery not working along with possibility of switching to db2 or db8 wavelets from sym4 wavelets.
+\item Wrote functions to add a toggle to record different metrics evaluating algorithm performance.
+\end{itemize}
+
+\item {\bf July 7, 2023}:
+\begin{itemize} 
+\item Compared the phi function values for the original image vs the recovered image we got to check if the function penalizes masking in the final recovered image. 
+\item Worked on the Linear SVM training model to implement it with our algorithm.
+\end{itemize}
+
+\item {\bf July 10, 2023}:
+\begin{itemize} 
+\item Corrected a bug in the part of the code written last year.
+\item Compared the objective function values for masking-degradation to realise that the formulation of masking as an image recovery problem according to \cite{ImageRecoveryPCombettes} is incorrect.
+\item Plotted graphs for different hyperparameter settings.
+\end{itemize}
+
+\item {\bf July 11, 2023}:
+\begin{itemize} 
+\item Added \textit{results} section to the presentation.
+\item Implemented blurring as a degradation and recovery method - as an application to our optimisation problem.
+\item Read up on the SVM problem and tried to get it finished.
+\end{itemize}
+
+\item {\bf July 12, 2023}:
+\begin{itemize} 
+\item Showed the final presentation draft to our advisor. 
+\item Made a few changes to the presentation as required.
+\item Played around with different parameters and selected the best recovery to upload in the presentation.
+\end{itemize}
+
+\item {\bf July 13, 2023}:
+\begin{itemize} 
+\item Uploaded recoveries of images of ZIB.
+\item Final Presentation mock with my project partner.
+\item Final Presentation Symposium.
+\end{itemize}
+
+\item {\bf July 14, 2023}:
+\begin{itemize} 
+\item Created ReadMe.md for our repository.
+\item Completed some final changes.
+\end{itemize}
+
+\item {\bf July 17, 2023}:
+\begin{itemize}
+    \item Updated GitHub repository and made final changed to ReadMe.md
+\end{itemize}
 \end{itemize}
 
 \bibliographystyle{plain}
