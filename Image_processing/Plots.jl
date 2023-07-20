@@ -57,6 +57,7 @@ gr()
 #     global sum11 += functions[functions_I+k](matrix_dot_product(get_L(L, k), [img_arr_1, img_arr_2]))
 # end
 
+
 # global sum12 = 0
 # for i in 1:functions_I
 #     global sum11 +=functions[i]([img_arr_1, img_arr_2][i])
