@@ -21,8 +21,8 @@ function vectorToImage(rows::Int64, columns::Int64, vector::Vector{T}) where {T}
 end
 
 # global path_1 = "/Users/kashishgoel/Downloads/imagel.jpg"
-global path_1 = "/Users/kashishgoel/Downloads/imagel.jpg"
-global path_2 = "/Users/kashishgoel/Downloads/imager.jpg" 
+global path_1 = "/Users/kashishgoel/Downloads/left.jpeg"
+global path_2 = "/Users/kashishgoel/Downloads/right.jpeg" 
 
 img_arr_1 = imageToVector(image_to_vector(path_1))
 img_arr_2 = imageToVector(image_to_vector(path_2))
@@ -42,9 +42,9 @@ global randomize_initial = false                      # this bool must be set to
 global initialize_with_zi = true                      # this bool must be set to true if you want to initialize the initial vector with the defected images itself
 #record_residual = 1 for storing ||x_{n+1} - x_n||^2
 global compute_epoch_bool = false
-global record_residual = true
-global record_func = true
-global record_dist = true
+global record_residual = false
+global record_func = false
+global record_dist = false
 
 # the variable record_method indicates the type of variable you wish to use for the x_axis
 # "0" is used for plotting against the number of iterations
@@ -111,7 +111,7 @@ z2 = blur(z2)
 # z2 = masking_right(z2)
 
 function shift_image_left(image::Matrix{Float64}, x::Int64)
-    width, height = size(image)
+    height, width = size(image)
     shifted_image = similar(image)
 
     for y = 1:height
@@ -125,19 +125,20 @@ end
 
 function define_D(image::Vector{Float64})
     image1 = vectorToImage(row1,col1,image)
-    image2 = shift_image_left(image1,7)
+    image2 = shift_image_left(image1,13)
     return imageToVector(image2)
 end
 
 function define_D(image::Matrix{Float64})
     image = vec(image)
     image1 = vectorToImage(row1,col1,image)
-    image2 = shift_image_left(image1,7)
+    image2 = shift_image_left(image1,13)
     return imageToVector(image2)
 end
 
 function shift_image_right(image::Matrix{Float64}, x::Int)
-    width, height = size(image)
+    height, width = size(image)
+    # println(width," ",height)
     shifted_image = similar(image)
 
     for y = 1:height
@@ -152,14 +153,14 @@ end
 
 function define_D_star(image::Vector{Float64})
     image1 = vectorToImage(row1,col1,image)
-    image2 = shift_image_right(image1,7)
+    image2 = shift_image_right(image1,13)
     return imageToVector(image2)
 end
 
 function define_D_star(image::Matrix{Float64})
     image = vec(image)
     image1 = vectorToImage(row1,col1,image)
-    image2 = shift_image_right(image1,7)
+    image2 = shift_image_right(image1,13)
     return imageToVector(image2)
 end
 
