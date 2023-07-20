@@ -2,7 +2,6 @@ using LinearAlgebra
 using ProximalOperators
 using Random
 
-
 global functions_I = 3
 global functions_K = 5
 
@@ -35,14 +34,45 @@ function generate_mu_constant(k,j)
     return constant_m[k]
 end
 
-global block_function = get_block_cyclic        #To be set by user
-global generate_gamma = generate_gamma_constant      #To be set by user
-global generate_mu = generate_mu_constant            #To be set by user
+function generate_gamma_seq(i,j)
+    if j == 1
+        return 1/epsilon
+    else
+        if vars.gamma_history[j-1][i] == epsilon
+            return epsilon
+        else
+            return ((1/epsilon) - 0.1*(j-1))
+        end
+    end
+end
 
+function generate_mu_seq(k,j)
+    if j == 1
+        return 1/epsilon
+    else
+        if vars.mu_history[j-1][k] == epsilon
+            return epsilon
+        else
+            return ((1/epsilon) - 0.1*(j-1))   # in future we can also set the subtraction constant different for different i and k using the constant arrays made in main.jl
+        end
+    end
+end
+
+global block_function = get_block_cyclic        #To be set by user
+global generate_gamma = generate_gamma_constant  #To be set by user
+global generate_mu = generate_mu_seq          #To be set by user
+
+global compute_epoch_bool = true
 #record_residual = 1 for storing ||x_{n+1} - x_n||^2
-global record_residual = true
+global record_residual = false
 global record_func = false
 global record_dist = true
+# the variable record_method indicates the type of variable you wish to use for the x_axis
+# "0" is used for plotting against the number of iterations
+# "1" is used for plotting against the epoch number
+# "2" is used to plot against the number of prox calla
+# "3" is used to plot against the wall clock time
+global record_method = "0"      
 
 global functions = []
 
@@ -88,7 +118,7 @@ append!(functions, [Linear([1,0])])
 append!(functions, [Linear([0,1])])
 append!(functions, [Linear([1,2,3])])
 
-global final_ans = [[0.0, 1.0], [0.5, 0.134], [0.73, 0.47, 0.2]]
+global final_ans = [[0,1],[0.5,0.13397459621],[0.73273875808,0.46547751617,0.19821627426]]
 global f_ans = [0, 0, 0]
 global g_ans = [0,0, 0, 0.134, 2.27]
 
