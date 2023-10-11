@@ -1,0 +1,93 @@
+include("problem.jl")
+
+struct variables
+    a::Vector{Vector{Float64}}
+    a_star::Vector{Vector{Float64}}
+    b::Vector{Vector{Float64}}
+    b_star::Vector{Vector{Float64}}
+    t::Vector{Vector{Float64}}
+    t_star::Vector{Vector{Float64}}
+    l::Vector{Vector{Float64}}
+    l_star::Vector{Vector{Float64}}
+    sum_i::Vector{Float64}
+    sum_k::Vector{Float64}
+    birthdates::Vector{Vector{Int32}}
+    tasks_num::Vector{Int32}
+    task_number::Vector{Vector{Int32}}
+    running_tasks::Vector{Vector{Any}}
+    gamma_history::Vector{Any}
+    mu_history::Vector{Any}
+end
+
+struct result
+    x::Vector{Vector{Vector{Float64}}}
+    v_star::Vector{Vector{Vector{Float64}}}
+end
+
+zeros_I = []
+zeros_K = []
+
+for i in 1:functions_I                     # I believe this is already generalised according to dimensions
+    append!(zeros_I, [zeros(dims_I[i])])
+end
+for i in 1:functions_K                     # I believe this is already generalised according to dimensions
+    append!(zeros_K, [zeros(dims_K[i])])
+end
+
+# println(length(zeros_I))
+# println(length(zeros_K))
+
+# println(zeros_I)
+# println(zeros_K)
+
+vars = variables(   zeros_I, 
+                    zeros_I, 
+                    zeros_K, 
+                    zeros_K,
+                    zeros_K, 
+                    zeros_I, 
+                    zeros_K, 
+                    zeros_I,
+                    zeros(functions_I),       
+                    zeros(functions_K),   
+                    [[],[]],     
+                    [0,0],       
+                    [[],[]],     
+                    [[],[]],     
+                    [],
+                    []
+                    )
+
+res = result(   [zeros_I],
+                [zeros_K])
+
+if randomize_initial == true
+    for i in 1:functions_I
+    # res.x[1][1] = w_1
+    # res.x[1][2] = w_2
+        res.x[1][i] = w[i]
+    end
+end
+
+if initialize_with_zi == true
+    for i in 1:functions_I
+        res.x[1][i] = z[i]
+    end
+    # res.x[1][1] = z1
+    # res.x[1][2] = z2
+end
+
+global store_x = Vector{Vector{Vector{Float64}}}(undef, iters)
+global store_v = Vector{Vector{Vector{Float64}}}(undef, iters)
+
+global prox_call = []
+for i in 1:functions_I+functions_K
+    push!(prox_call,0)
+end
+
+global prox_call_count = 0
+
+global x_residuals = Vector{Vector{Float64}}([])
+global f_values = []
+global only_f_values = []
+global dist_to_minima = Vector{Vector{Float64}}([])
