@@ -25,19 +25,6 @@ function (f::HingeDot)(x)
     return hinge_loss_result
 end
 
-# Example usage
-beta = [1.5, 2.0, 1.8]
-mu = [[0.8, 1.2, 1.5] ,[0.8, 1.2, 1.5]] #d dimensioned p vectors
-k = 2
-
-hinge_dot_function = HingeDot(beta, mu, k)
-
-# Call the custom HingeDot function on a vector x
-x = [0.07, .12, .034]
-result = hinge_dot_function(x)
-
-println("Result of HingeDot function call on x: ", result)
-
 function ProximalOperators.prox!(y, f::HingeDot, x, gamma)
     mu = SqrNormL2(2)(f.mu[f.k])
     Lx = Linear(f.mu[f.k])(x)
@@ -48,8 +35,3 @@ function ProximalOperators.prox!(y, f::HingeDot, x, gamma)
     y .= (x + (1/mu)*p)
     return f(y)
 end
-
-#prox(f, x, gamma)
-println("Prox of a pre-exisitng fn = ", prox(CubeNormL2(1), x, 1.0))
-println("Prox of hinge_dot_function = ", prox(hinge_dot_function, x, 1.0))
-#We want to be able to call both preexisitng functions in ProximalOperators.jl and ones that we define ourselves.
