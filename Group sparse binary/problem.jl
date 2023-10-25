@@ -1,20 +1,19 @@
 using LinearAlgebra
 using ProximalOperators
 using Random
-
-# using Wavelets
-
+using Wavelets
+include("hinge_dot.jl")
 global L_function_bool = false  #Set this to be true if you want to input L as a Matrix of functions. Need to declare adjoint functions below:
 
 m = 3
 p = 2
 # functions_I = m , functions_K = p
-# user has to input the values if m and p
+# user has to input the values of m and p
 global functions_I = m
 global functions_K = p
 
 
-global beta = fill(1,p)
+global beta = fill(1.0,p)
 
 
 global sigma = 0.01
@@ -81,28 +80,14 @@ global L_star_function = [[identity,identity,identity],[identity,identity,identi
 
 global L = fill(fill(1.0,m),p)
 global L_star_function = fill(fill(1.0,m),p)
-
-
-
 global functions = []
 
-global mu = fill(1,p)
-
-# function g_k(k::Int)
-#     # y = linear(mu[k])
-#     # return x -> 
-# end
-
-function h(k)
-    function inner_function(x)
-        return HingeLoss(beta[k],10)(Linear(mu[k])(x))
-    end
-    return inner_function
-end
+global d = 10
+d_one = fill(1.0, d)
+global mu = fill(d_one,p)
 
 include("functions.jl")
 
-global d = 10
 global dims_I = fill(d,m)
 global dims_K = fill(d,p)
 global block_function = get_block_cyclic             #To be set by user
@@ -114,5 +99,5 @@ for i in 1:functions_I
 end
 
 for i in 1:functions_K
-    append!(functions,[h(i)])
+    append!(functions,[HingeDot(beta, mu, k)])
 end
