@@ -6,7 +6,7 @@ include("problem.jl")
 
 #intialising our problem
 global D = 40
-global iters = 500
+global iters = 1000
 global epsilon = 0.5
 
 global constant_g = []   # this is being defined if for generate_gamma the strategy being taken is generate_gamma_constant
@@ -28,7 +28,7 @@ include("variables.jl")
 include("loop.jl")
 
 println()
-# print("Final ans: ")
+print("Final ans: ")
 
 # println("reached here")
 
@@ -39,34 +39,26 @@ x_res = []
 for i in 1:functions_I
     push!(x_res,res.x[iters][i])
 end
+println(size(x_res))
 
-# println("reached here too")
+global y_pred::Vector{Float64} = fill(0.0, d)
 
-# ret_image_left = matrix_to_image(vectorToImage(row1,col1,x1))
-# ret_image_right = matrix_to_image(vectorToImage(row2,col2,x2))
+for j in 1:length(x_res)
+    println(x_res[j])
+    global y_pred += x_res[j]
+end
 
-# println("reached here tooooo")
+global beta_res = Float64[] #The predicted beta (classifications)
+global corr_pred::Float64 = 0 #the correct predictions count
+for i in 1:p
+    push!(beta_res, sign(dot(mu1[i], y_pred)))
+    println(beta_k[i], " ", sign(dot(mu1[i], y_pred)))
+    if beta_res[i] == beta_k[i]
+        global corr_pred+=1
+    end
+end
 
-# image_path_left = "/Users/kashishgoel/Desktop/Intern_2023/Image_processing/ret_image_left.jpeg"  # Replace with the desired path and filename for the image
-# save(image_path_left, ret_image_left)  
-
-# global ret_path_1 = "/Users/kashishgoel/Desktop/Intern_2023/Image_processing/ret_1.jpeg"
-# global ret_path_2 = "//Users/kashishgoel/Desktop/Intern_2023/Image_processing/ret_2.jpeg"
-# global ret_path_3 = "/Users/kashishgoel/Desktop/Intern_2023/Image_processing/3.jpeg"
-# global ret_path_4 = "/Users/kashishgoel/Desktop/Intern_2023/Image_processing/4.jpeg"
-
-# ret_path = []
-# for i in 1:functions_I
-#     push!(ret_path,"/Users/kashishgoel/Desktop/Intern_2023/Image_processing/ret_$i.jpeg")
-#     save(ret_path[i],ret_images[i])
-# end
-
-# println("reached here tooooo")
-
-# image_path_right = "/Users/kashishgoel/Desktop/Intern_2023/Image_processing/ret_image_right.jpeg"  # Replace with the desired path and filename for the image
-# save(image_path_right, ret_image_right)  
-
-# println("reached here tooooo")
+println("corr_pred = ", corr_pred, "\n Accuracy = ", (corr_pred / p))
 
 
 println(check_feasibility())
