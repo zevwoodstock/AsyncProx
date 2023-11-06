@@ -25,6 +25,9 @@ function (f::HingeDot)(x)
     return hinge_loss_result
 end
 
+
+# println("Result of HingeDot function call on x: ", result)
+
 function ProximalOperators.prox!(y, f::HingeDot, x, gamma)
     mu = SqrNormL2(2)(f.mu[f.k])
     Lx = Linear(f.mu[f.k])(x)
