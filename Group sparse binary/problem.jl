@@ -1,25 +1,63 @@
 using LinearAlgebra
 using ProximalOperators
 using Random
-using Wavelets
+# using Wavelets
 include("hinge_dot.jl")
 global L_function_bool = false  #Set this to be true if you want to input L as a Matrix of functions. Need to declare adjoint functions below:
 
-m = 3
-p = 2
+function generate_G_x(m, d)
+    g = [Int[] for _ in 1:m]
+    x = [Int[0 for _ in 1:d] for _ in 1:m]
+    start = 1
+    for i in 1:m
+        if i == 1
+            start = 1
+        else
+            start += 7
+        end
+        
+        temp = Int[]
+        for j in 1:10
+            push!(temp, start + j - 1)
+            x[i][start + j - 1] = 1
+        end
+        g[i]= temp
+    end
+    return g, x
+end
+
+m = 7  # The number of intervals (number of Gi)
+d = 52
+p = 300
+G, original_x = generate_G_x(m, d)
+original_y = sum(original_x, dims=1)[1]
+d_one = fill(1.0, d)
+global mu1::Vector{Vector{Float64}} = []
+for _ in 1:p
+    random_vector = randn(Float64, d)
+    rnorm = NormL2(1)(random_vector)
+    random_vector = random_vector/rnorm
+    # println(random_vector)
+    push!(mu1, random_vector)
+end
+
+w_temp = []
+for i in 1:p
+    if i%4==0
+        push!(w_temp, -1)
+    else
+        push!(w_temp, 1)
+    end
+end
+w = shuffle(w_temp)
+
+
 # functions_I = m , functions_K = p
 # user has to input the values of m and p
 global functions_I = m
 global functions_K = p
 
 
-global beta = fill(1.0,p)
-
-
-global sigma = 0.01
-global sigma_1 = 0.001
-global sigma_2 = 0.001
-global theta_main = 0.1
 global randomize_initial = false                      # this bool must be set to true if you want to randomize the intiial vector
 global initialize_with_zi = false                      # this bool must be set to true if you want to initialize the initial vector with the defected images itself
 #record_residual = 1 for storing ||x_{n+1} - x_n||^2
@@ -52,39 +90,14 @@ function phi(x)
     return result
 end
 
-function generate_random_vector(N, sigma)
-    rng = MersenneTwister(1234)  # Set a random number generator seed for reproducibility
-    mu = 0.0  # Mean of the normal distribution (default: 0.0)
-    sigma_squared = sigma^2  # Variance of the normal distribution
-    
-    random_vector = sqrt(sigma_squared) * randn(rng, N) .+ mu
-    return random_vector
-end
-
-global norm_function = SqrNormL2(1)
-
-identity_function(x)::Function = x
-
-function null_func(input_vector)
-    return zeros(eltype(input_vector), length(input_vector))
-end
-
-# global L_function =  [[masking_l, null_func], [null_func, masking_r], [identity_function, define_D]]
-global L_function = [[identity,identity,identity],[identity,identity,identity]]
-# global L_function::Vector{Vector{Function}} = fill(fill(identity,m),p)
-# global L_function = [[identity , null_func], [null_func, identity], [identity, define_D]]        #for no masking
-
-# global L_star_function = [[masking_l, null_func], [null_func, masking_r], [identity, define_D_star]]
-# global L_star_function::Vector{Vector{Function}} = fill(fill(identity,m),p)
-global L_star_function = [[identity,identity,identity],[identity,identity,identity]]
-
 global L = fill(fill(1.0,m),p)
-global L_star_function = fill(fill(1.0,m),p)
+
 global functions = []
 
-global d = 10
-d_one = fill(1.0, d)
-global mu = fill(d_one,p)
+global beta_k = Float64[]
+for i in 1:p
+    push!(beta_k, w[i]*sign(dot(mu1[i], original_y)))
+end
 
 include("functions.jl")
 
@@ -99,5 +112,5 @@ for i in 1:functions_I
 end
 
 for i in 1:functions_K
-    append!(functions,[HingeDot(beta, mu, k)])
+    append!(functions,[HingeDot(beta_k, mu1, k)])
 end
