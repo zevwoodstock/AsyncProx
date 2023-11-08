@@ -29,9 +29,9 @@ function generate_G_x(m, d)
     return g, x
 end
 
-m = 100  # The number of intervals (number of Gi)
-d = 1000
-p = 1000
+m = 100 # The number of intervals (number of Gi)
+d = 52
+p = 50
 G, original_x = generate_G_x(m, d)
 original_y = sum(original_x, dims=1)[1]
 d_one = fill(1.0, d)
@@ -114,6 +114,6 @@ for i in 1:functions_I
     append!(functions,[SqrNormL2(2)])
 end
 
-for i in 1:functions_K
+for k in 1:functions_K
     append!(functions,[HingeDot(beta_k, mu1, k)])
 end
