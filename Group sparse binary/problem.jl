@@ -7,7 +7,7 @@ global L_function_bool = false  #Set this to be true if you want to input L as a
 
 function generate_G_x(m, d)
     g = [Int[] for _ in 1:m]
-    x = [Int[0 for _ in 1:d] for _ in 1:m]
+    x = [Float64[0.0 for _ in 1:d] for _ in 1:m]
     start = 1
     for i in 1:m
         if i == 1
@@ -18,17 +18,20 @@ function generate_G_x(m, d)
         
         temp = Int[]
         for j in 1:10
+            if start + j - 1 > d
+                break
+            end
             push!(temp, start + j - 1)
-            x[i][start + j - 1] = 1
+            x[i][start + j - 1] = randn()*1000
         end
         g[i]= temp
     end
     return g, x
 end
 
-m = 7  # The number of intervals (number of Gi)
-d = 52
-p = 300
+m = 100  # The number of intervals (number of Gi)
+d = 1000
+p = 1000
 G, original_x = generate_G_x(m, d)
 original_y = sum(original_x, dims=1)[1]
 d_one = fill(1.0, d)
