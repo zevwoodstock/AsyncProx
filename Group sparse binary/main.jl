@@ -6,7 +6,7 @@ include("problem.jl")
 
 #intialising our problem
 global D = 40
-global iters = 1000
+global iters = 100
 global epsilon = 0.5
 
 global constant_g = []   # this is being defined if for generate_gamma the strategy being taken is generate_gamma_constant
