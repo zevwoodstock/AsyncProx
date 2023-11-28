@@ -5,6 +5,10 @@ using Random
 include("hinge_dot.jl")
 global L_function_bool = false  #Set this to be true if you want to input L as a Matrix of functions. Need to declare adjoint functions below:
 
+function generate_random_array(q, p)
+    return rand(Float64, q) .* p
+end
+
 function generate_G_x(m, d)
     g = [Int[] for _ in 1:m]
     x = [Float64[0.0 for _ in 1:d] for _ in 1:m]
@@ -29,9 +33,12 @@ function generate_G_x(m, d)
     return g, x
 end
 
-m = 100 # The number of intervals (number of Gi)
-d = 52
-p = 50
+m = 1429 # The number of intervals (number of Gi)
+d = 10000
+p = 1000
+global q_datacenters = 100
+global ping_array = generate_random_array(q_datacenters, 0.05)
+global mapping_ping = rand(1:100, p)
 G, original_x = generate_G_x(m, d)
 original_y = sum(original_x, dims=1)[1]
 d_one = fill(1.0, d)
