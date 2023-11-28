@@ -6,7 +6,7 @@ include("problem.jl")
 
 #intialising our problem
 global D = 40
-global iters = 100
+global iters = 10
 global epsilon = 0.5
 
 global constant_g = []   # this is being defined if for generate_gamma the strategy being taken is generate_gamma_constant
@@ -44,7 +44,7 @@ println(size(x_res))
 global y_pred::Vector{Float64} = fill(0.0, d)
 
 for j in 1:length(x_res)
-    println(x_res[j])
+    # println(x_res[j])
     global y_pred += x_res[j]
 end
 
@@ -52,7 +52,7 @@ global beta_res = Float64[] #The predicted beta (classifications)
 global corr_pred::Float64 = 0 #the correct predictions count
 for i in 1:p
     push!(beta_res, sign(dot(mu1[i], y_pred)))
-    println(beta_k[i], " ", sign(dot(mu1[i], y_pred)))
+    # println(beta_k[i], " ", sign(dot(mu1[i], y_pred)))
     if beta_res[i] == beta_k[i]
         global corr_pred+=1
     end
