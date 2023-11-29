@@ -50,11 +50,11 @@ global block_function = get_block_cyclic             #To be set by user
 global generate_gamma = generate_gamma_seq      #To be set by user
 global generate_mu = generate_mu_constant            #To be set by user
 
-mu_i, beta_k = define_mu_beta(p, d, original_y)
+mu_k, beta_k = define_mu_beta(p, d, original_y)
 global functions = []
 for i in 1:functions_I
     append!(functions,[SqrNormL2(2)])
 end
 for k in 1:functions_K
-    append!(functions,[HingeDot(beta_k, mu_i, k)])
+    append!(functions,[HingeDot(beta_k, mu_k, k)])
 end

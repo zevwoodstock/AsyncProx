@@ -35,12 +35,12 @@ function generate_G_x(m, d)
 end
 
 function define_mu_beta(p::Int64, d::Int64, original_y::Vector{Float64}) 
-    mu_i::Vector{Vector{Float64}} = []
+    mu_k::Vector{Vector{Float64}} = []
     for _ in 1:p
         random_vector = randn(Float64, d)
         rnorm = NormL2(1)(random_vector)
         random_vector = random_vector/rnorm
-        push!(mu_i, random_vector)
+        push!(mu_k, random_vector)
     end
 
     w_temp = []
@@ -55,9 +55,9 @@ function define_mu_beta(p::Int64, d::Int64, original_y::Vector{Float64})
 
     beta_k = Float64[]
     for i in 1:p
-        push!(beta_k, w[i]*sign(dot(mu_i[i], original_y)))
+        push!(beta_k, w[i]*sign(dot(mu_k[i], original_y)))
     end
-    return mu_i, beta_k
+    return mu_k, beta_k
 end
 
 function get_block_cyclic(n::Int64, m::Int64 = 20, M::Int64 = 5) 
