@@ -1,7 +1,7 @@
 using LinearAlgebra
 using ProximalOperators
 using Random
-# include("masking.jl")
+
 include("problem.jl")
 
 #intialising our problem
@@ -30,14 +30,9 @@ include("loop.jl")
 println()
 print("Final ans: ")
 
-# println("reached here")
-
-# x1 = res.x[iters][1]
-# x2 = res.x[iters][2]
-
 x_res = []
 for i in 1:functions_I
-    push!(x_res,res.x[iters][i])
+    push!(x_res, res.x[iters][i])
 end
 println(size(x_res))
 
@@ -52,14 +47,11 @@ global beta_res = Float64[] #The predicted beta (classifications)
 global corr_pred::Float64 = 0 #the correct predictions count
 for i in 1:p
     push!(beta_res, sign(dot(mu1[i], y_pred)))
-    # println(beta_k[i], " ", sign(dot(mu1[i], y_pred)))
     if beta_res[i] == beta_k[i]
         global corr_pred+=1
     end
 end
 
 println("corr_pred = ", corr_pred, "\n Accuracy = ", (corr_pred / p))
-
-
 println(check_feasibility())
 println()

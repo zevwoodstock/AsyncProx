@@ -6,6 +6,60 @@ if L_function_bool == true
     L = L_function
 end
 
+function generate_random_array(q, p)
+    return rand(Float64, q) .* p
+end
+
+function generate_G_x(m, d)
+    g = [Int[] for _ in 1:m]
+    x = [Float64[0.0 for _ in 1:d] for _ in 1:m]
+    start = 1
+    for i in 1:m
+        if i == 1
+            start = 1
+        else
+            start += 7
+        end
+        
+        temp = Int[]
+        for j in 1:10
+            if start + j - 1 > d
+                break
+            end
+            push!(temp, start + j - 1)
+            x[i][start + j - 1] = randn()*1000
+        end
+        g[i]= temp
+    end
+    return g, x
+end
+
+function define_mu_beta(p::Int64, d::Int64, original_y::Vector{Float64}) 
+    mu_i::Vector{Vector{Float64}} = []
+    for _ in 1:p
+        random_vector = randn(Float64, d)
+        rnorm = NormL2(1)(random_vector)
+        random_vector = random_vector/rnorm
+        push!(mu_i, random_vector)
+    end
+
+    w_temp = []
+    for i in 1:p
+        if i%4==0
+            push!(w_temp, -1)
+        else
+            push!(w_temp, 1)
+        end
+    end
+    w = shuffle(w_temp)
+
+    beta_k = Float64[]
+    for i in 1:p
+        push!(beta_k, w[i]*sign(dot(mu_i[i], original_y)))
+    end
+    return mu_i, beta_k
+end
+
 function get_block_cyclic(n::Int64, m::Int64 = 20, M::Int64 = 5) 
     block_size = div(m, M)
     start = (((n%M) - 1) * block_size) % m + 1
@@ -327,17 +381,6 @@ end
 
 function custom_prox(t, f, y, gamma)
     sleep(t)
-    if f == phi
-        dwt = Wavelets.dwt(y, wavelet(WT.sym4))
-		#This step assumes that mu_array is constant. mu_array is
-		#the constant of coefficients of the l1 norm in the imaging
-		#problem. Increasing that coefficient effectively increases
-		#the parameter of the prox.
-		st = soft_threshold(dwt, gamma*mu_array[1])
-        # st = soft_threshold(dwt, 1.0)
-        idwt = Wavelets.idwt(st, wavelet(WT.sym4))
-        return idwt, phi(idwt)
-    end
     a,b = prox(f,y,gamma)
     return a,b
 end
