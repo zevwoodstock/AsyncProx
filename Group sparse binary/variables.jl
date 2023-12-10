@@ -23,7 +23,7 @@ struct result
     x::Vector{Vector{Vector{Float64}}}
     v_star::Vector{Vector{Vector{Float64}}}
 end
-
+    
 zeros_I = []
 zeros_K = []
 
@@ -88,6 +88,7 @@ end
 global prox_call_count = 0
 
 global x_residuals = Vector{Vector{Float64}}([])
+global x_residuals_avg :: Vector{Float64} = []
 global f_values = []
 global only_f_values = []
-global dist_to_minima = Vector{Vector{Float64}}([])
+global dist_to_minima :: Vector{Float64} = []
