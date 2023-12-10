@@ -8,7 +8,7 @@ global prox_count_array = []
 for j in 1:iters
     println("j = ",j)
     # println("theta = ", theta_main)
-    global I_n = block_function(j,functions_I,10)
+    global I_n = block_function(j,functions_I,1)
     global K_n = block_function(j,functions_K,1)
     println("block functions made")
     update_params(j)
@@ -23,7 +23,7 @@ for j in 1:iters
     println("computed j, 2")
     calc_theta(j)
     println("calculated theta")
-    # write(j)
+    write(j)
     update_vars(j)
     println("updated vars(j)")
     push!(prox_count_array,prox_call_count)
@@ -31,6 +31,7 @@ for j in 1:iters
     if compute_epoch_bool == true
         # if epoch_found == false
         if compute_epoch()
+            # print("Epoch computed")
             global epoch_found = true
             push!(epoch_array,j)
             for i in 1:functions_I+functions_K
@@ -40,5 +41,6 @@ for j in 1:iters
         # end
     end
 end
-# println(phi(res.x[iters]))
+global final_ans = res.x[iters]
 record()
+
