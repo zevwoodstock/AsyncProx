@@ -6,77 +6,6 @@ if L_function_bool == true
     L = L_function
 end
 
-function generate_random_array(q, p)
-    return rand(Float64, q) .* p
-end
-
-function generate_G_x(m, d)
-    g = [Int[] for _ in 1:m]
-    x = [Float64[0.0 for _ in 1:d] for _ in 1:m]
-    start = 1
-    for i in 1:m
-        if i == 1
-            start = 1
-        else
-            start += 7
-        end
-        
-        temp = Int[]
-        for j in 1:10
-            if start + j - 1 > d
-                break
-            end
-            push!(temp, start + j - 1)
-            x[i][start + j - 1] = randn()*1000
-        end
-        g[i]= temp
-    end
-    return g, x
-end
-
-function define_mu_beta(p::Int64, d::Int64, original_y::Vector{Float64}) 
-    mu_k::Vector{Vector{Float64}} = []
-    for _ in 1:p
-        random_vector = randn(Float64, d)
-        rnorm = NormL2(1)(random_vector)
-        random_vector = random_vector/rnorm
-        push!(mu_k, random_vector)
-    end
-
-    w_temp = []
-    for i in 1:p
-        if i%4==0
-            push!(w_temp, -1)
-        else
-            push!(w_temp, 1)
-        end
-    end
-    w = shuffle(w_temp)
-
-    beta_k = Float64[]
-    for i in 1:p
-        push!(beta_k, w[i]*sign(dot(mu_k[i], original_y)))
-    end
-    return mu_k, beta_k
-end
-
-function get_block_cyclic(n::Int64, m::Int64 = 20, M::Int64 = 5) 
-    block_size = div(m, M)
-    start = (((n%M) - 1) * block_size) % m + 1
-    fin = start + block_size - 1
-
-    if n % M == 0
-        start = ((M - 1)* block_size)%m + 1
-        fin = max(fin, m)
-    end
-
-    arr = Int64[]
-    for i in start:fin
-        push!(arr, i)
-        # println(arr)
-    end
-    return arr
-end
 
 function rearrange(L::Vector{Vector{Vector}})
     # println("1")
@@ -174,6 +103,81 @@ end
 function rearrange(mat::Matrix)
     # println("4")
     return mat'
+end
+
+
+L_transpose = rearrange(L)
+
+function generate_random_array(q, p)
+    return rand(Float64, q) .* p
+end
+
+function generate_G_x(m, d)
+    g = [Int[] for _ in 1:m]
+    x = [Float64[0.0 for _ in 1:d] for _ in 1:m]
+    start = 1
+    for i in 1:m
+        if i == 1
+            start = 1
+        else
+            start += 7
+        end
+        
+        temp = Int[]
+        for j in 1:10
+            if start + j - 1 > d
+                break
+            end
+            push!(temp, start + j - 1)
+            x[i][start + j - 1] = randn()*1000
+        end
+        g[i]= temp
+    end
+    return g, x
+end
+
+function define_mu_beta(p::Int64, d::Int64, original_y::Vector{Float64}) 
+    mu_k::Vector{Vector{Float64}} = []
+    for _ in 1:p
+        random_vector = randn(Float64, d)
+        rnorm = NormL2(1)(random_vector)
+        random_vector = random_vector/rnorm
+        push!(mu_k, random_vector)
+    end
+
+    w_temp = []
+    for i in 1:p
+        if i%4==0
+            push!(w_temp, -1)
+        else
+            push!(w_temp, 1)
+        end
+    end
+    w = shuffle(w_temp)
+
+    beta_k = Float64[]
+    for i in 1:p
+        push!(beta_k, w[i]*sign(dot(mu_k[i], original_y)))
+    end
+    return mu_k, beta_k
+end
+
+function get_block_cyclic(n::Int64, m::Int64 = 20, M::Int64 = 5) 
+    block_size = div(m, M)
+    start = (((n%M) - 1) * block_size) % m + 1
+    fin = start + block_size - 1
+
+    if n % M == 0
+        start = ((M - 1)* block_size)%m + 1
+        fin = max(fin, m)
+    end
+
+    arr = Int64[]
+    for i in start:fin
+        push!(arr, i)
+        # println(arr)
+    end
+    return arr
 end
 
 #a function to find the L2 norm of a vector                       
@@ -300,6 +304,8 @@ function generate_gamma_seq(i,j)
     else
         if vars.gamma_history[j-1][i] == epsilon
             return epsilon
+        else if ((1/epsilon) - 0.1*(j-1)) <= epsilon
+            return epsilon
         else
             return ((1/epsilon) - 0.1*(j-1))
         end
@@ -311,6 +317,8 @@ function generate_mu_seq(k,j)
         return 1/epsilon
     else
         if vars.mu_history[j-1][k] == epsilon
+            return epsilon
+        else if ((1/epsilon) - 0.1*(j-1)) <= epsilon
             return epsilon
         else
             return ((1/epsilon) - 0.1*(j-1))   # in future we can also set the subtraction constant different for different i and k using the constant arrays made in main.jl
@@ -366,7 +374,7 @@ function compute(j, ind)
                 vars.t[task] = vars.b[task] - matrix_dot_product(get_L(L, task), vars.a)
                 vars.sum_k[task] = (norm_function(vars.t[task]))*2               
             else
-                vars.t_star[task] = vars.a_star[task] +  matrix_dot_product(get_L(rearrange(L), task), vars.b_star)
+                vars.t_star[task] = vars.a_star[task] +  matrix_dot_product(get_L(L_transpose, task), vars.b_star)
                 vars.sum_i[task] = (norm_function(vars.t_star[task]))*2
             end
         else
@@ -389,7 +397,7 @@ function define_tasks(j)
     #schedule a new task in each iteration for each i in I, and append it to the running tasks vector
     for i in I_n                  # change  - incorporated blocks into this, now running over entire I_n
             # println("am in")
-            vars.l_star[i] = matrix_dot_product(get_L(rearrange(L), i), res.v_star[j]) 
+            vars.l_star[i] = matrix_dot_product(get_L(L_transpose, i), res.v_star[j]) 
             delay = 0
             local task = @task custom_prox(delay,functions[i], res.x[j][i]-vars.l_star[i]*vars.gamma_history[j][i] ,vars.gamma_history[j][i])
             prox_call[i] = 1
@@ -498,9 +506,9 @@ function write(j)
     store_v[j] = Vector{Vector{Float64}}(undef, functions_K)
     for i in 1:functions_I
         store_x[j][i] = res.x[j][i]
-        open("x" * string(i,base = 10) * ".txt",mode) do io
-            println(io,res.x[j][i])
-        end
+        # open("x" * string(i,base = 10) * ".txt",mode) do io
+        #     println(io,res.x[j][i])
+        # end
     end
     for k in 1:functions_K
         store_v[j][k] = matrix_dot_product(get_L(L, k), res.x[j])
@@ -539,75 +547,81 @@ function record()
         if record_residual == true
             for j in 2:iters
                 temp = []
+                sum = 0
                 for i in 1:functions_I
                     push!(temp, SqrNormL2(1)(store_x[j][i] - store_x[j-1][i]))
-                end
+                    sum+=SqrNormL2(1)(store_x[j][i] - store_x[j-1][i])
+                end 
+                push!(x_residuals_avg, sum/functions_I)
                 push!(x_residuals, temp)
             end
+            println(x_residuals_avg)
         end
         if record_dist == true
             for j in 1:iters
-                temp1 = []
-                for i in 1:functions_I
-                    push!(temp1, NormL2(1)(store_x[j][i] - final_ans[i]))
-                end
-                push!(dist_to_minima, temp1)
+                push!(dist_to_minima, NormL2(1)(store_x[j] - final_ans))
             end
+            println("dist to minima is ", dist_to_minima)
         end
         if record_func == true
             for j in 1:iters
                 sum = 0
                 for i in 1:functions_I
-                    sum+= NormL2(1)(functions[i](store_x[j][i]) - functions[i](final_ans[i]))
+                    sum+= (functions[i](store_x[j][i]) - functions[i](final_ans[i]))
                 end
                 for k in 1:functions_K
-                    sum+= NormL2(1)(functions[functions_I+k](store_v[j][k]) - functions[functions_I+k](matrix_dot_product(get_L(L, k), final_ans)))            
+                    sum+= functions[functions_I+k](store_v[j][k]) - functions[functions_I+k](store_v[iters])            
                 end
-                push!(f_values, sum)
+                push!(f_values, abs(sum))
             end
             for j in 1:iters
                 sum = 0
                 for i in 1:functions_I
-                    sum+= NormL2(1)(functions[i](store_x[j][i]))
+                    sum+= (functions[i](store_x[j][i]))
                 end
                 for k in 1:functions_K
-                    sum+= NormL2(1)(functions[functions_I+k](store_v[j][k]))            
+                    sum+= (functions[functions_I+k](store_v[j][k]))            
                 end
                 push!(only_f_values, sum)
             end
+            println(only_f_values)
         end
     end
     if record_method == "1"
+        # println("Yay")
         if record_residual == true
+            # println(epoch_array)
+            # println(store_x)
             for j in epoch_array
                 if j != 1
                     temp = []
+                    sum = 0
                     for i in 1:functions_I
                         push!(temp, SqrNormL2(1)(store_x[j][i] - store_x[j-1][i]))
+                        sum+=SqrNormL2(1)(store_x[j][i] - store_x[j-1][i])
                     end
                     push!(x_residuals, temp)
+                    push!(x_residuals_avg, sum/functions_I)
                 end
             end
+            println(x_residuals_avg)
         end
         if record_dist == true
             for j in epoch_array
-                temp1 = []
-                for i in 1:functions_I
-                    push!(temp1, NormL2(1)(store_x[j][i] - final_ans[i]))
-                end
-                push!(dist_to_minima, temp1)
+                push!(dist_to_minima, NormL2(1)(store_x[j] - final_ans))
             end
+            println("dist to minima is ", dist_to_minima)
         end
         if record_func == true
             for j in epoch_array
                 sum = 0
                 for i in 1:functions_I
-                    sum+= NormL2(1)(functions[i](store_x[j][i]) - functions[i](final_ans[i]))
+                    sum+= (functions[i](store_x[j][i]) - functions[i](final_ans[i]))
                 end
                 for k in 1:functions_K
-                    sum+= NormL2(1)(functions[functions_I+k](store_v[j][k]) - functions[functions_I+k](matrix_dot_product(get_L(L, k), final_ans)))            
+                    sum+= functions[functions_I+k](store_v[j][k]) - functions[functions_I+k](store_v[iters])            
                 end
-                push!(f_values, sum)
+                push!(f_values, abs(sum))
             end
         end
     end
@@ -626,34 +640,32 @@ function record()
                 end
                 push!(x_residuals, temp)
             end
+            
         end
         if record_dist == true
             for j in 1:iters
-                temp1 = []
-                for i in 1:functions_I
-                    push!(temp1, NormL2(1)(store_x[j][i] - final_ans[i]))
-                end
-                push!(dist_to_minima, temp1)
+                push!(dist_to_minima, NormL2(1)(store_x[j] - final_ans))
             end
+            println("dist to minima is ", dist_to_minima)
         end
         if record_func == true
             for j in 1:iters
                 sum = 0
                 for i in 1:functions_I
-                    sum+= NormL2(1)(functions[i](store_x[j][i]) - functions[i](final_ans[i]))
+                    sum+= (functions[i](store_x[j][i]) - functions[i](final_ans[i]))
                 end
                 for k in 1:functions_K
-                    sum+= NormL2(1)(functions[functions_I+k](store_v[j][k]) - functions[functions_I+k](matrix_dot_product(get_L(L, k), final_ans)))            
+                    sum+= functions[functions_I+k](store_v[j][k]) - functions[functions_I+k](store_v[iters])            
                 end
-                push!(f_values, sum)
+                push!(f_values, abs(sum))
             end
             for j in 1:iters
                 sum = 0
                 for i in 1:functions_I
-                    sum+= NormL2(1)(functions[i](store_x[j][i]))
+                    sum+=(functions[i](store_x[j][i]))
                 end
                 for k in 1:functions_K
-                    sum+= NormL2(1)(functions[functions_I+k](store_v[j][k]))            
+                    sum+=(functions[functions_I+k](store_v[j][k]))            
                 end
                 push!(only_f_values, sum)
             end
