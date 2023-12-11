@@ -62,7 +62,6 @@ function calculate_beta()
 end
 
 function rearrange(L::Vector{Vector{Vector}})
-    # println("1")
     L_star::Vector{Vector{Vector}} = []
     temp = []
     for i in 1:functions_I
@@ -80,13 +79,11 @@ function rearrange(L::Vector{Vector{Vector}})
 end
 
 function rearrange(L::Vector{Vector{Matrix{Float64}}})
-    # println("yeah")
     L_star::Vector{Vector{Matrix}} = []
     temp = []
     for i in 1:functions_I
         for k in 1:functions_K
             new_matrix = L[k][i]'
-            # println(new_matrix)
             push!(temp, new_matrix)
         end
     end
@@ -100,7 +97,6 @@ function rearrange(L::Vector{Vector{Matrix{Float64}}})
 end
 
 function rearrange(L::Vector{Vector{Int64}})
-    # println("3")
     L_star::Vector{Vector{Int64}} = []
     temp::Vector{Int64} = []
     for i in 1:functions_I
@@ -118,7 +114,6 @@ function rearrange(L::Vector{Vector{Int64}})
 end
 
 function rearrange(L::Vector{Vector{Float64}})
-    # println("3")
     L_star::Vector{Vector{Float64}} = []
     temp::Vector{Float64} = []
     for i in 1:functions_I
@@ -141,7 +136,6 @@ function rearrange(L::Vector{Vector{Function}})
     for i in 1:functions_I
         for k in 1:functions_K
             new_matrix = L_star_function[k][i]
-            # println(new_matrix)
             push!(temp, new_matrix)
         end
     end
@@ -155,7 +149,6 @@ function rearrange(L::Vector{Vector{Function}})
 end
 
 function rearrange(mat::Matrix)
-    # println("4")
     return mat'
 end
 
@@ -229,7 +222,6 @@ function get_block_cyclic(n::Int64, m::Int64 = 20, M::Int64 = 5)
     arr = Int64[]
     for i in start:fin
         push!(arr, i)
-        # println(arr)
     end
     return arr
 end
@@ -275,7 +267,6 @@ end
 function matrix_dot_product(v::Vector{Matrix}, u::Vector{Vector{Float64}})
     ans =  v[1]*reshape(u[1], length(u[1]), 1)
     ans*=0
-    # println("ans = ", ans)
     n = length(v)
     for i in 1:n
         v1 = v[i]
@@ -285,14 +276,12 @@ function matrix_dot_product(v::Vector{Matrix}, u::Vector{Vector{Float64}})
         matrix_product = v1 * column_vec
         ans = ans + matrix_product
     end
-    # println("ans is ", ans)
     return vec(ans)
 end
 
 function matrix_dot_product(v::Vector{Matrix{Float64}}, u::Vector{Vector{Float64}})
     ans =  v[1]*reshape(u[1], length(u[1]), 1)
     ans*=0
-    # println("ans = ", ans)
     n = length(v)
     for i in 1:n
         v1 = v[i]
@@ -302,7 +291,6 @@ function matrix_dot_product(v::Vector{Matrix{Float64}}, u::Vector{Vector{Float64
         matrix_product = v1 * column_vec
         ans = ans + matrix_product
     end
-    # println("ans is ", ans)
     return vec(ans)
 end
 
@@ -310,9 +298,6 @@ function matrix_dot_product(v::Vector{Function}, u::Vector{Vector{Float64}})
     ans =  v[1](reshape(u[1], length(u[1]), 1))
     ans*=0
     n = length(v)
-    # println(length(u))
-    # println(length(v))
-    # println(typeof(u))
     for i in 1:n
         v1 = v[i]
         u1 = u[i]
@@ -321,7 +306,6 @@ function matrix_dot_product(v::Vector{Function}, u::Vector{Vector{Float64}})
         matrix_product = v1(column_vec)
         ans = ans + matrix_product
     end
-    # println("ans is ", ans)
     return vec(ans)
 end
 
@@ -329,9 +313,6 @@ function matrix_dot_product(v::Vector{Float64}, u::Vector{Vector{Float64}})
     ans =  v[1]*(reshape(u[1], length(u[1]), 1))
     ans*=0
     n = length(v)
-    # println(length(u))
-    # println(length(v))
-    # println(typeof(u))
     for i in 1:n
         v1 = v[i]
         u1 = u[i]
@@ -340,7 +321,6 @@ function matrix_dot_product(v::Vector{Float64}, u::Vector{Vector{Float64}})
         matrix_product = v1*(column_vec)
         ans = ans + matrix_product
     end
-    # println("ans is ", ans)
     return vec(ans)
 end
 
@@ -450,7 +430,6 @@ end
 function define_tasks(j)    
     #schedule a new task in each iteration for each i in I, and append it to the running tasks vector
     for i in I_n                  # change  - incorporated blocks into this, now running over entire I_n
-            # println("am in")
             vars.l_star[i] = matrix_dot_product(get_L(L_transpose, i), res.v_star[j]) 
             delay = 0
             local task = @task custom_prox(delay,functions[i], res.x[j][i]-vars.l_star[i]*vars.gamma_history[j][i] ,vars.gamma_history[j][i])
@@ -460,7 +439,6 @@ function define_tasks(j)
     end
 
     for k in K_n
-            # println("am in")
             vars.l[k] = matrix_dot_product(get_L(L, k), res.x[j])
             delay = 0
             local task = @task custom_prox(delay, functions[functions_I+k], vars.l[k] + vars.mu_history[j][k]*res.v_star[j][k], vars.mu_history[j][k])
@@ -642,10 +620,7 @@ function record()
         end
     end
     if record_method == "1"
-        # println("Yay")
         if record_residual == true
-            # println(epoch_array)
-            # println(store_x)
             for j in epoch_array
                 if j != 1
                     temp = []

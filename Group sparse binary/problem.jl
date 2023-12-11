@@ -3,23 +3,26 @@ using ProximalOperators
 using Random
 include("hinge_dot.jl")
 global L_function_bool = false  #Set this to be true if you want to input L as a Matrix of functions. Need to declare adjoint functions below:
-include("functions.jl")
 
+# user has to input the values of m and p
 # m = 1429 # The number of intervals (number of Gi)
 m = 100
 # d = 10000
 d = 1000
 # p = 100
 p = 300
+global L = fill(fill(1.0,m),p)
+global functions_I = m
+global functions_K = p
+include("functions.jl")
+
 global q_datacenters = 100
 global ping_array = generate_random_array(q_datacenters, 0.05)
 global mapping_ping = rand(1:100, p)
 global mu_k::Vector{Vector{Float64}} = []
 global beta_k = Float64[]
 
-# user has to input the values of m and p
-global functions_I = m
-global functions_K = p
+
 global randomize_initial = false                      # this bool must be set to true if you want to randomize the intiial vector
 global initialize_with_zi = false                      # this bool must be set to true if you want to initialize the initial vector with the defected images itself
 #record_residual = 1 for storing ||x_{n+1} - x_n||^2
@@ -39,7 +42,7 @@ global record_method = "0"
 # end
 # global mu_array = constant_vector(N,0.1)
 
-global L = fill(fill(1.0,m),p)
+
 global dims_I = fill(d,m)
 global dims_K = fill(d,p)
 global block_function = get_block_cyclic             #To be set by user
