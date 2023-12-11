@@ -3,12 +3,24 @@ using ProximalOperators
 using Random
 
 if L_function_bool == true
-    L = L_function
+    L = L_function          # Will this change the global variable L?
 end
 
 function generate_random_array(q, p)
     return rand(Float64, q) .* p
 end
+
+function initialise()
+    global L = fill(fill(1.0,m),p)
+    global functions_I = m
+    global functions_K = p
+    global dims_I = fill(d,m)
+    global dims_K = fill(d,p)
+    global mapping_ping = rand(1:100, p)
+    global ping_array = generate_random_array(q_datacenters, 0.05)
+end
+
+initialise()
 
 function generate_G_x(m, d)
     g = [Int[] for _ in 1:m]
@@ -159,37 +171,13 @@ function generate_random_array(q, p)
     return rand(Float64, q) .* p
 end
 
-function generate_G_x(m, d)
-    g = [Int[] for _ in 1:m]
-    x = [Float64[0.0 for _ in 1:d] for _ in 1:m]
-    start = 1
-    for i in 1:m
-        if i == 1
-            start = 1
-        else
-            start += 7
-        end
-        
-        temp = Int[]
-        for j in 1:10
-            if start + j - 1 > d
-                break
-            end
-            push!(temp, start + j - 1)
-            x[i][start + j - 1] = randn()*1000
-        end
-        g[i]= temp
-    end
-    return g, x
-end
-
 function define_mu_beta(p::Int64, d::Int64, original_y::Vector{Float64}) 
-    mu_k::Vector{Vector{Float64}} = []
+    mu_temp::Vector{Vector{Float64}} = []
     for _ in 1:p
         random_vector = randn(Float64, d)
         rnorm = NormL2(1)(random_vector)
         random_vector = random_vector/rnorm
-        push!(mu_k, random_vector)
+        push!(mu_temp, random_vector)
     end
 
     w_temp = []
@@ -202,11 +190,11 @@ function define_mu_beta(p::Int64, d::Int64, original_y::Vector{Float64})
     end
     w = shuffle(w_temp)
 
-    beta_k = Float64[]
+    beta_temp = Float64[]
     for i in 1:p
-        push!(beta_k, w[i]*sign(dot(mu_k[i], original_y)))
+        push!(beta_temp, w[i]*sign(dot(mu_temp[i], original_y)))
     end
-    return mu_k, beta_k
+    return mu_temp, beta_temp
 end
 
 function get_block_cyclic(n::Int64, m::Int64 = 20, M::Int64 = 5) 
@@ -226,7 +214,7 @@ function get_block_cyclic(n::Int64, m::Int64 = 20, M::Int64 = 5)
     return arr
 end
 
-#a function to find the L2 norm of a vector                       
+# A function to find the L2 norm of a vector                       
 global norm_function = SqrNormL2(1)
 
 function linear_operator_sum(function_array::Vector{Vector}, x, tr)

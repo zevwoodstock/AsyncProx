@@ -1,4 +1,3 @@
-include("functions.jl")
 include("problem.jl")
 
 global epoch_found = false

@@ -9,13 +9,15 @@ include("hinge_dot.jl")
 global L_function_bool = false  #Set this to be true if you want to input L as a Matrix of functions. Need to declare adjoint functions.
 
 # m = 1429 # The number of intervals (number of Gi)
-m = 100
+global m = 100
 # d = 10000
-d = 1000
+global d = 1000
 # p = 100
-p = 300
-
+global p = 300
 global q_datacenters = 100
+
+include("functions.jl")
+
 global block_function = get_block_cyclic
 global generate_gamma = generate_gamma_seq
 global generate_mu = generate_mu_constant
@@ -35,17 +37,8 @@ global record_method = "0"
 
 # -- X -- X -- X -- X -- X -- X -- X -- X -- Code Starts here -- X -- X -- X -- X -- X -- X -- X -- X 
 
-global L = fill(fill(1.0,m),p)
-global dims_I = fill(d,m)
-global dims_K = fill(d,p)
-global functions_I = m
-global functions_K = p
-include("functions.jl")
-global ping_array = generate_random_array(q_datacenters, 0.05)
-global mapping_ping = rand(1:100, p)
 global mu_k::Vector{Vector{Float64}} = []
-global beta_k = Float64[]  
-
+global beta_k = Float64[] 
 calculate_mu_beta()
 
 global functions = []
