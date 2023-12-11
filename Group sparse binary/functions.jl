@@ -34,7 +34,7 @@ function generate_G_x(m, d)
     return g, x
 end
 
-function calculate_beta()
+function calculate_mu_beta()
     G, original_x = generate_G_x(m, d)
     original_y = sum(original_x, dims=1)[1]
     d_one = fill(1.0, d)

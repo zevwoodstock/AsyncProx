@@ -25,9 +25,6 @@ function (f::HingeDot)(x)
     return hinge_loss_result
 end
 
-
-# println("Result of HingeDot function call on x: ", result)
-
 function ProximalOperators.prox!(y, f::HingeDot, x, gamma)
     datacenter_index = mapping_ping[f.k]
     sleep_time = ping_array[datacenter_index]

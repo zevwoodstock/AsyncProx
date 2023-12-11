@@ -34,12 +34,6 @@ for i in 1:functions_K                     # I believe this is already generalis
     append!(zeros_K, [zeros(dims_K[i])])
 end
 
-# println(length(zeros_I))
-# println(length(zeros_K))
-
-# println(zeros_I)
-# println(zeros_K)
-
 vars = variables(   zeros_I, 
                     zeros_I, 
                     zeros_K, 
@@ -63,8 +57,6 @@ res = result(   [zeros_I],
 
 if randomize_initial == true
     for i in 1:functions_I
-    # res.x[1][1] = w_1
-    # res.x[1][2] = w_2
         res.x[1][i] = w[i]
     end
 end
@@ -73,8 +65,6 @@ if initialize_with_zi == true
     for i in 1:functions_I
         res.x[1][i] = z[i]
     end
-    # res.x[1][1] = z1
-    # res.x[1][2] = z2
 end
 
 global store_x = Vector{Vector{Vector{Float64}}}(undef, iters)
