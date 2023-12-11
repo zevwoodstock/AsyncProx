@@ -6,6 +6,60 @@ if L_function_bool == true
     L = L_function
 end
 
+function generate_random_array(q, p)
+    return rand(Float64, q) .* p
+end
+
+function generate_G_x(m, d)
+    g = [Int[] for _ in 1:m]
+    x = [Float64[0.0 for _ in 1:d] for _ in 1:m]
+    start = 1
+    for i in 1:m
+        if i == 1
+            start = 1
+        else
+            start += 7
+        end
+        
+        temp = Int[]
+        for j in 1:10
+            if start + j - 1 > d
+                break
+            end
+            push!(temp, start + j - 1)
+            x[i][start + j - 1] = randn()*1000
+        end
+        g[i]= temp
+    end
+    return g, x
+end
+
+function calculate_beta()
+    G, original_x = generate_G_x(m, d)
+    original_y = sum(original_x, dims=1)[1]
+    d_one = fill(1.0, d)
+    
+    for _ in 1:p
+        random_vector = randn(Float64, d)
+        rnorm = NormL2(1)(random_vector)
+        random_vector = random_vector/rnorm
+        push!(mu_k, random_vector)
+    end
+    w_temp = []
+    for i in 1:p
+        if i%4==0
+            push!(w_temp, -1)
+        else
+            push!(w_temp, 1)
+        end
+    end
+    w = shuffle(w_temp)
+
+    for i in 1:p
+        push!(beta_k, w[i]*sign(dot(mu_k[i], original_y)))
+    end
+
+end
 
 function rearrange(L::Vector{Vector{Vector}})
     # println("1")
@@ -304,7 +358,7 @@ function generate_gamma_seq(i,j)
     else
         if vars.gamma_history[j-1][i] == epsilon
             return epsilon
-        else if ((1/epsilon) - 0.1*(j-1)) <= epsilon
+        elseif ((1/epsilon) - 0.1*(j-1)) <= epsilon
             return epsilon
         else
             return ((1/epsilon) - 0.1*(j-1))
@@ -318,7 +372,7 @@ function generate_mu_seq(k,j)
     else
         if vars.mu_history[j-1][k] == epsilon
             return epsilon
-        else if ((1/epsilon) - 0.1*(j-1)) <= epsilon
+        elseif ((1/epsilon) - 0.1*(j-1)) <= epsilon
             return epsilon
         else
             return ((1/epsilon) - 0.1*(j-1))   # in future we can also set the subtraction constant different for different i and k using the constant arrays made in main.jl

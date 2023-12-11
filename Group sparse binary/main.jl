@@ -44,8 +44,8 @@ end
 global beta_res = Float64[] #The predicted beta (classifications)
 global corr_pred::Float64 = 0 #the correct predictions count
 for i in 1:p
-    push!(beta_res, sign(dot(mu1[i], y_pred)))
-    # println(beta_k[i], " ", sign(dot(mu1[i], y_pred)))
+    push!(beta_res, sign(dot(mu_k[i], y_pred)))
+    # println(beta_k[i], " ", sign(dot(mu_k[i], y_pred)))
     if beta_res[i] == beta_k[i]
         global corr_pred+=1
     end
