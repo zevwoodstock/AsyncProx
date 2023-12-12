@@ -552,14 +552,12 @@ function check_feasibility()
 end
 
 function compute_epoch()
-    # if epoch_found == false
-        for i in 1:functions_I+functions_K
-            if prox_call[i] == 0
-                return false
-            end
+    for i in 1:functions_I+functions_K
+        if prox_call[i] == 0
+            return false
         end
-        return true
-    # end        
+    end
+    return true  
 end
 
 function record()
@@ -575,11 +573,12 @@ function record()
                 push!(x_residuals_avg, sum/functions_I)
                 push!(x_residuals, temp)
             end
-            println(x_residuals_avg)
+            println("x_residuals_avg is ", x_residuals_avg)
+            println("x_residuals is ", x_residuals)
         end
         if record_dist == true
             for j in 1:iters
-                push!(dist_to_minima, NormL2(1)(store_x[j] - final_ans))
+                push!(dist_to_minima, NormL2(1)(store_x[j] - store_x[iters]))
             end
             println("dist to minima is ", dist_to_minima)
         end
@@ -587,7 +586,6 @@ function record()
             for j in 1:iters
                 sum = 0
                 for i in 1:functions_I
-                    # sum+= (functions[i](store_x[j][i]) - functions[i](final_ans[i]))
                     sum+= (functions[i](store_x[j][i]) - functions[i](store_x[iters][i]))
                 end
                 for k in 1:functions_K
@@ -605,7 +603,8 @@ function record()
                 end
                 push!(only_f_values, sum)
             end
-            println(only_f_values)
+            println("f_values is ", f_values)
+            println("only_f_values is ", only_f_values)
         end
     end
     if record_method == "1"
@@ -622,11 +621,12 @@ function record()
                     push!(x_residuals_avg, sum/functions_I)
                 end
             end
-            println(x_residuals_avg)
+            println("x_residuals_avg is ", x_residuals_avg)
+            println("x_residuals is ", x_residuals)
         end
         if record_dist == true
             for j in epoch_array
-                push!(dist_to_minima, NormL2(1)(store_x[j] - final_ans))
+                push!(dist_to_minima, NormL2(1)(store_x[j] - store_x[iters]))
             end
             println("dist to minima is ", dist_to_minima)
         end
@@ -634,13 +634,25 @@ function record()
             for j in epoch_array
                 sum = 0
                 for i in 1:functions_I
-                    sum+= (functions[i](store_x[j][i]) - functions[i](final_ans[i]))
+                    sum+= (functions[i](store_x[j][i]) - functions[i](store_x[iters][i]))
                 end
                 for k in 1:functions_K
                     sum+= functions[functions_I+k](store_v[j][k]) - functions[functions_I+k](store_v[iters][k])            
                 end
                 push!(f_values, abs(sum))
             end
+            for j in epoch_array
+                sum = 0
+                for i in 1:functions_I
+                    sum+= functions[i](store_x[j][i])
+                end
+                for k in 1:functions_K
+                    sum+= functions[functions_I+k](store_v[j][k])         
+                end
+                push!(only_f_values, sum)
+            end
+            println("f_values is ", f_values)
+            println("only_f_values is ", only_f_values)
         end
     end
     if record_method == "2"
@@ -658,11 +670,12 @@ function record()
                 end
                 push!(x_residuals, temp)
             end
-            
+            println("x_residuals_avg is ", x_residuals_avg)
+            println("x_residuals is ", x_residuals)
         end
         if record_dist == true
             for j in 1:iters
-                push!(dist_to_minima, NormL2(1)(store_x[j] - final_ans))
+                push!(dist_to_minima, NormL2(1)(store_x[j] - store_x[iters]))
             end
             println("dist to minima is ", dist_to_minima)
         end
@@ -670,7 +683,7 @@ function record()
             for j in 1:iters
                 sum = 0
                 for i in 1:functions_I
-                    sum+= (functions[i](store_x[j][i]) - functions[i](final_ans[i]))
+                    sum+= (functions[i](store_x[j][i]) - functions[i](store_x[iters][i]))
                 end
                 for k in 1:functions_K
                     sum+= functions[functions_I+k](store_v[j][k]) - functions[functions_I+k](store_v[iters][k])            
@@ -687,6 +700,8 @@ function record()
                 end
                 push!(only_f_values, sum)
             end
+            println("f_values is ", f_values)
+            println("only_f_values is ", only_f_values)
         end
     end
 end

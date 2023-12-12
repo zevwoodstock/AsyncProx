@@ -1,6 +1,6 @@
 include("problem.jl")
 
-global epoch_found = false
+# global epoch_found = false
 global epoch_array = []
 global prox_count_array = []
 
@@ -28,16 +28,13 @@ for j in 1:iters
     push!(prox_count_array,prox_call_count)
 
     if compute_epoch_bool == true
-        # if epoch_found == false
         if compute_epoch()
-            # print("Epoch computed")
-            global epoch_found = true
+            # global epoch_found = true
             push!(epoch_array,j)
             for i in 1:functions_I+functions_K
                 prox_call[i] = 0
             end
         end
-        # end
     end
 end
 global final_ans = res.x[iters]

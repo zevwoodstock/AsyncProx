@@ -28,17 +28,21 @@ global initialize_with_zi = false                   # this bool must be set to t
 global compute_epoch_bool = false                   # Necessary if record method is "1" - epoch numbers
 
 global record_residual = false                      # record_residual = 1 for storing ||x_{n+1} - x_n||^2
-global record_func = true                          # record_func = 1 for storing f(x_n)
-global record_dist = false                          # record_dist = 1 for storing ||x_{n} - x^*||^2
+global record_func = true                           # record_func = 1 for storing f(x_n)
+global record_dist = false                          # record_dist = 1 for storing ||x_* - x_n||^2
 
 # the variable record_method indicates the type of variable you wish to use for the x_axis
 # "0" is used for plotting against the number of iterations
-# "1" is used for plotting against the epoch number, need to mark compute_epoch_bool = true as well then
+# "1" is used for plotting against the epoch number
 # "2" is used to plot against the number of prox calls
 # "3" is used to plot against the wall clock time
 global record_method = "0"    
 
 # -- X -- X -- X -- X -- X -- X -- X -- X -- Code Starts here -- X -- X -- X -- X -- X -- X -- X -- X 
+
+if record_method == "1"
+    compute_epoch_bool = true
+end
 
 global mu_k::Vector{Vector{Float64}} = []
 global beta_k = Float64[] 
