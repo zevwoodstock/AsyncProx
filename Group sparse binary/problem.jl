@@ -22,12 +22,15 @@ global block_function = get_block_cyclic
 global generate_gamma = generate_gamma_seq
 global generate_mu = generate_mu_constant
 
-global randomize_initial = false                    # this bool must be set to true if you want to randomize the intiial vector
-global initialize_with_zi = false                   # this bool must be set to true if you want to initialize the initial vector with the defected images itself
-global compute_epoch_bool = false                   # Necessary if record method is against epochs
+global randomize_initial = false                    # this bool must be set to true if you want to randomize the initial vector
+global initialize_with_zi = false                   # this bool must be set to true if you want to initialize the initial vector with the defected images
+
+global compute_epoch_bool = false                   # Necessary if record method is "1" - epoch numbers
+
 global record_residual = false                      # record_residual = 1 for storing ||x_{n+1} - x_n||^2
-global record_func = false
-global record_dist = false
+global record_func = true                          # record_func = 1 for storing f(x_n)
+global record_dist = false                          # record_dist = 1 for storing ||x_{n} - x^*||^2
+
 # the variable record_method indicates the type of variable you wish to use for the x_axis
 # "0" is used for plotting against the number of iterations
 # "1" is used for plotting against the epoch number, need to mark compute_epoch_bool = true as well then

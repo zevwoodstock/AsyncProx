@@ -587,10 +587,11 @@ function record()
             for j in 1:iters
                 sum = 0
                 for i in 1:functions_I
-                    sum+= (functions[i](store_x[j][i]) - functions[i](final_ans[i]))
+                    # sum+= (functions[i](store_x[j][i]) - functions[i](final_ans[i]))
+                    sum+= (functions[i](store_x[j][i]) - functions[i](store_x[iters][i]))
                 end
                 for k in 1:functions_K
-                    sum+= functions[functions_I+k](store_v[j][k]) - functions[functions_I+k](store_v[iters])            
+                    sum+= functions[functions_I+k](store_v[j][k]) - functions[functions_I+k](store_v[iters][k])            
                 end
                 push!(f_values, abs(sum))
             end
@@ -636,7 +637,7 @@ function record()
                     sum+= (functions[i](store_x[j][i]) - functions[i](final_ans[i]))
                 end
                 for k in 1:functions_K
-                    sum+= functions[functions_I+k](store_v[j][k]) - functions[functions_I+k](store_v[iters])            
+                    sum+= functions[functions_I+k](store_v[j][k]) - functions[functions_I+k](store_v[iters][k])            
                 end
                 push!(f_values, abs(sum))
             end
@@ -672,7 +673,7 @@ function record()
                     sum+= (functions[i](store_x[j][i]) - functions[i](final_ans[i]))
                 end
                 for k in 1:functions_K
-                    sum+= functions[functions_I+k](store_v[j][k]) - functions[functions_I+k](store_v[iters])            
+                    sum+= functions[functions_I+k](store_v[j][k]) - functions[functions_I+k](store_v[iters][k])            
                 end
                 push!(f_values, abs(sum))
             end
