@@ -334,6 +334,22 @@ function generate_gamma_seq(i,j)
     end
 end
 
+function generate_gamma_linear_decrease(i,j)
+    if j == 1
+        return 1/epsilon
+    else
+        if vars.gamma_history[j-1][i] == epsilon
+            return epsilon
+        elseif ((1/epsilon) - 0.1*(j-1)) <= epsilon
+            return epsilon
+        else
+            return ((1/epsilon) - 0.1*(j-1))
+        end
+    end
+end
+
+# gamma = max(c, min(d, ((1 / epsilon) - 0.1 * (j - 1))))
+
 function generate_mu_seq(k,j)
     if j == 1
         return 1/epsilon
@@ -551,6 +567,34 @@ function check_feasibility()
     return feasible
 end
 
+function get_accuracy()
+    println()
+    print("Final ans: ")
+
+    x_res = []
+    for i in 1:functions_I
+        push!(x_res,res.x[iters][i])
+    end
+    println(size(x_res))
+    y_pred::Vector{Float64} = fill(0.0, d)
+
+    for j in 1:length(x_res)
+        y_pred += x_res[j]
+    end
+
+    beta_res = Float64[]                                             #The predicted beta (classifications)
+    corr_pred::Float64 = 0                                           #the correct predictions count
+
+    for i in 1:p
+        push!(beta_res, sign(dot(mu_k[i], y_pred)))
+        if beta_res[i] == beta_k[i]
+            corr_pred+=1
+        end
+    end
+
+    println("Correct predictions = ", corr_pred, "\nAccuracy = ", (corr_pred / p))
+end
+
 function compute_epoch()
     for i in 1:functions_I+functions_K
         if prox_call[i] == 0
@@ -573,14 +617,14 @@ function record()
                 push!(x_residuals_avg, sum/functions_I)
                 push!(x_residuals, temp)
             end
-            println("x_residuals_avg is ", x_residuals_avg)
-            println("x_residuals is ", x_residuals)
+            println("\nx_residuals_avg is ", x_residuals_avg)
+            println("\nx_residuals is ", x_residuals)
         end
         if record_dist == true
             for j in 1:iters
                 push!(dist_to_minima, NormL2(1)(store_x[j] - store_x[iters]))
             end
-            println("dist to minima is ", dist_to_minima)
+            println("\ndist to minima is ", dist_to_minima)
         end
         if record_func == true
             for j in 1:iters
@@ -603,8 +647,8 @@ function record()
                 end
                 push!(only_f_values, sum)
             end
-            println("f_values is ", f_values)
-            println("only_f_values is ", only_f_values)
+            println("\nf_values is ", f_values)
+            println("\nonly_f_values is ", only_f_values)
         end
     end
     if record_method == "1"
@@ -621,14 +665,14 @@ function record()
                     push!(x_residuals_avg, sum/functions_I)
                 end
             end
-            println("x_residuals_avg is ", x_residuals_avg)
-            println("x_residuals is ", x_residuals)
+            println("\nx_residuals_avg is ", x_residuals_avg)
+            println("\nx_residuals is ", x_residuals)
         end
         if record_dist == true
             for j in epoch_array
                 push!(dist_to_minima, NormL2(1)(store_x[j] - store_x[iters]))
             end
-            println("dist to minima is ", dist_to_minima)
+            println("\ndist to minima is ", dist_to_minima)
         end
         if record_func == true
             for j in epoch_array
@@ -651,8 +695,8 @@ function record()
                 end
                 push!(only_f_values, sum)
             end
-            println("f_values is ", f_values)
-            println("only_f_values is ", only_f_values)
+            println("\nf_values is ", f_values)
+            println("\nonly_f_values is ", only_f_values)
         end
     end
     if record_method == "2"
@@ -670,14 +714,14 @@ function record()
                 end
                 push!(x_residuals, temp)
             end
-            println("x_residuals_avg is ", x_residuals_avg)
-            println("x_residuals is ", x_residuals)
+            println("\nx_residuals_avg is ", x_residuals_avg)
+            println("\nx_residuals is ", x_residuals)
         end
         if record_dist == true
             for j in 1:iters
                 push!(dist_to_minima, NormL2(1)(store_x[j] - store_x[iters]))
             end
-            println("dist to minima is ", dist_to_minima)
+            println("\ndist to minima is ", dist_to_minima)
         end
         if record_func == true
             for j in 1:iters
@@ -700,8 +744,8 @@ function record()
                 end
                 push!(only_f_values, sum)
             end
-            println("f_values is ", f_values)
-            println("only_f_values is ", only_f_values)
+            println("\nf_values is ", f_values)
+            println("\nonly_f_values is ", only_f_values)
         end
     end
 end

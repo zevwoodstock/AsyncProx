@@ -1,5 +1,3 @@
-include("problem.jl")
-
 # global epoch_found = false
 global epoch_array = []
 global prox_count_array = []
@@ -24,7 +22,7 @@ for j in 1:iters
     println("calculated theta")
     write(j)
     update_vars(j)
-    println("updated vars(j)")
+    println("updated vars(j)\n")
     push!(prox_count_array,prox_call_count)
 
     if compute_epoch_bool == true

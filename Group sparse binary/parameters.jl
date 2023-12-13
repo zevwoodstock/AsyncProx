@@ -6,6 +6,10 @@ include("hinge_dot.jl")
 
 # -- X -- X -- X -- X -- X -- X -- X -- X -- USER-DEFINED Parameters -- X -- X -- X -- X -- X -- X -- X -- X 
 
+global D = 40
+global iters = 10
+global epsilon = 0.01
+
 global L_function_bool = false  #Set this to be true if you want to input L as a Matrix of functions. Need to declare adjoint functions.
 
 # m = 1429 # The number of intervals (number of Gi)
@@ -21,6 +25,12 @@ include("functions.jl")
 global block_function = get_block_cyclic
 global generate_gamma = generate_gamma_seq
 global generate_mu = generate_mu_constant
+
+# constant_gamma = epsilon + ((1/epsilon - epsilon) * rand())
+global constant_gamma = 1
+
+# constant_mu = epsilon + ((1/epsilon - epsilon) * rand())
+global constant_mu = 0.35
 
 global randomize_initial = false                    # this bool must be set to true if you want to randomize the initial vector
 global initialize_with_zi = false                   # this bool must be set to true if you want to initialize the initial vector with the defected images
@@ -38,12 +48,14 @@ global record_dist = false                          # record_dist = 1 for storin
 # "3" is used to plot against the wall clock time
 global record_method = "0"    
 
-# -- X -- X -- X -- X -- X -- X -- X -- X -- Code Starts here -- X -- X -- X -- X -- X -- X -- X -- X 
+# -- X -- X -- X -- X -- X -- X -- X -- X -- Some Precomputations -- X -- X -- X -- X -- X -- X -- X -- X 
 
 if record_method == "1"
     compute_epoch_bool = true
 end
 
+global constant_g = []   # this is defined if for generate_gamma the strategy taken is generate_gamma_constant
+global constant_m = []   # this is defined if for generate_mu the strategy taken is generate_mu_constant
 global mu_k::Vector{Vector{Float64}} = []
 global beta_k = Float64[] 
 calculate_mu_beta()
@@ -51,7 +63,9 @@ calculate_mu_beta()
 global functions = []
 for i in 1:functions_I
     append!(functions,[SqrNormL2(2)])
+    append!(constant_g, constant_gamma)
 end
 for k in 1:functions_K
     append!(functions,[HingeDot(beta_k, mu_k, k)])
+    append!(constant_m, constant_mu)
 end

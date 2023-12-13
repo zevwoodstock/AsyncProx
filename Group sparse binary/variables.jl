@@ -1,5 +1,3 @@
-include("problem.jl")
-
 struct variables
     a::Vector{Vector{Float64}}
     a_star::Vector{Vector{Float64}}
