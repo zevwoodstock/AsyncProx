@@ -8,7 +8,6 @@ include("hinge_dot.jl")
 
 global D = 40
 global iters = 10
-global epsilon = 0.01
 
 global L_function_bool = false  #Set this to be true if you want to input L as a Matrix of functions. Need to declare adjoint functions.
 
@@ -23,14 +22,59 @@ global q_datacenters = 100
 include("functions.jl")
 
 global block_function = get_block_cyclic
-global generate_gamma = generate_gamma_seq
-global generate_mu = generate_mu_constant
 
-# constant_gamma = epsilon + ((1/epsilon - epsilon) * rand())
+global generate_gamma = generate_gamma_nonlinear_decrease
+global generate_mu = generate_mu_linear_decrease
+
+# For generate_gamma_constant
 global constant_gamma = 1
 
-# constant_mu = epsilon + ((1/epsilon - epsilon) * rand())
+# For generate_mu_constant
 global constant_mu = 0.35
+
+# For generate_gamma and mu random
+global epsilon = 0.01
+
+# For generate_gamma_linear_decrease
+global gamma_start = []
+global gamma_end = []
+global gamma_step = []
+for i in 1:functions_I
+    append!(gamma_start, 10)
+    append!(gamma_end, 0.5)
+    append!(gamma_step, 1)
+end
+
+# For generate_mu_linear_decrease
+
+# start - step*j
+global mu_start = []
+global mu_end = []
+global mu_step = []
+for k in 1:functions_K
+    append!(mu_start, 10)
+    append!(mu_end, 0.25)
+    append!(mu_step, 1)
+end
+
+# For generate_gamma_nonlinear_decrease
+
+# a + b/j
+global gamma_a = []
+global gamma_b = []
+for i in 1:functions_I
+    append!(gamma_a, 0.5)
+    append!(gamma_b, 5)
+end
+
+# For generate_mu_nonlinear_decrease
+global mu_a = []
+global mu_b = []
+for i in 1:functions_K
+    append!(mu_a, 0)
+    append!(mu_b, 5)
+end
+
 
 global randomize_initial = false                    # this bool must be set to true if you want to randomize the initial vector
 global initialize_with_zi = false                   # this bool must be set to true if you want to initialize the initial vector with the defected images
@@ -46,7 +90,10 @@ global record_dist = false                          # record_dist = 1 for storin
 # "1" is used for plotting against the epoch number
 # "2" is used to plot against the number of prox calls
 # "3" is used to plot against the wall clock time
-global record_method = "0"    
+global record_method = "0"  
+
+global alpha = 0.5
+global beta = 0.5
 
 # -- X -- X -- X -- X -- X -- X -- X -- X -- Some Precomputations -- X -- X -- X -- X -- X -- X -- X -- X 
 

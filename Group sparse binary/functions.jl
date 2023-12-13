@@ -164,12 +164,7 @@ function rearrange(mat::Matrix)
     return mat'
 end
 
-
 L_transpose = rearrange(L)
-
-function generate_random_array(q, p)
-    return rand(Float64, q) .* p
-end
 
 function define_mu_beta(p::Int64, d::Int64, original_y::Vector{Float64}) 
     mu_temp::Vector{Vector{Float64}} = []
@@ -215,7 +210,7 @@ function get_block_cyclic(n::Int64, m::Int64 = 20, M::Int64 = 5)
 end
 
 # A function to find the L2 norm of a vector                       
-global norm_function = SqrNormL2(1)
+norm_function = SqrNormL2(1)
 
 function linear_operator_sum(function_array::Vector{Vector}, x, tr)
     n = length(x)
@@ -232,11 +227,11 @@ function linear_operator_sum(function_array::Vector{Vector}, x, tr)
 end
 
 function linear_operator_sum(weights::Vector{Int64},x, tr)                   
-    global s = zeros(size(x[1], 1))
+    sum = zeros(size(x[1], 1))
     for i in 1:size(x, 1)
-        global s = s+weights[i]*x[i]
+        sum = sum + weights[i]*x[i]
     end
-    return s
+    return sum
 end
 
 function linear_operator_sum(mat::Matrix, x, tr)
@@ -334,22 +329,6 @@ function generate_gamma_seq(i,j)
     end
 end
 
-function generate_gamma_linear_decrease(i,j)
-    if j == 1
-        return 1/epsilon
-    else
-        if vars.gamma_history[j-1][i] == epsilon
-            return epsilon
-        elseif ((1/epsilon) - 0.1*(j-1)) <= epsilon
-            return epsilon
-        else
-            return ((1/epsilon) - 0.1*(j-1))
-        end
-    end
-end
-
-# gamma = max(c, min(d, ((1 / epsilon) - 0.1 * (j - 1))))
-
 function generate_mu_seq(k,j)
     if j == 1
         return 1/epsilon
@@ -362,6 +341,30 @@ function generate_mu_seq(k,j)
             return ((1/epsilon) - 0.1*(j-1))   # in future we can also set the subtraction constant different for different i and k using the constant arrays made in main.jl
         end
     end
+end
+
+function generate_gamma_linear_decrease(i, j)
+    return max(gamma_end[i], (gamma_start[i] - gamma_step[i] * (j - 1)))
+end
+
+function generate_mu_linear_decrease(k, j)
+    return max(mu_end[k], (mu_start[k] - mu_step[k] * (j - 1)))
+end
+
+function generate_gamma_random(i, j)
+    return epsilon + ((1/epsilon - epsilon) * rand())
+end
+
+function generate_mu_random(k, j)
+    return epsilon + ((1/epsilon - epsilon) * rand())
+end
+
+function generate_gamma_nonlinear_decrease(i, j)
+    return gamma_a[i] + (gamma_b[i] * (1/j))
+end
+
+function generate_mu_nonlinear_decrease(k, j)
+    return mu_a[k] + (mu_b[k] * (1/j))
 end
 
 function get_L(mat::AbstractMatrix, ind)
@@ -452,8 +455,8 @@ function define_tasks(j)
     end
 end
 
-function calc_theta(j)   ## no change required hopefully
-    lambda = 1/(j-0.5) + 0.5     # design decision
+function calc_theta(j)                                          # no change required hopefully
+    lambda = 1/(j-alpha) + beta
     tau = 0
     for i in 1:functions_I
         tau = tau + vars.sum_i[i] 
@@ -465,19 +468,19 @@ function calc_theta(j)   ## no change required hopefully
 
     global theta = 0
 
-    #finding theta
+    # Calculating theta
     if tau > 0
         sum = 0
-        #finding the sum of the dot products related to the I set
+        # Finding the sum of the dot products related to the I set
         for i in 1:functions_I
             sum = sum+dot(res.x[j][i], vars.t_star[i])-dot(vars.a[i],vars.a_star[i])
         end
-        #finding the sum of the dot products related to the K set
+        # Finding the sum of the dot products related to the K set
         for k in 1:functions_K
             sum = sum+dot(vars.t[k],res.v_star[j][k])-dot(vars.b[k],vars.b_star[k])
         end
-        #using the 2 sums to find theta according to the formula
-        global theta = lambda*max(0,sum)/tau
+        # Using the 2 sums to find theta according to the formula
+        theta = lambda*max(0,sum)/tau
     end
 end
 
@@ -492,30 +495,24 @@ function update_vars(j)
         v_star[k] = res.v_star[j][k] - theta*vars.t[k]
     end
     push!(res.v_star, v_star)
-
-    """sleep(0.001)
-    println(res.x[j])
-    if j==Iters
-        print("Final ans: ")
-        println(res.x[j])
-    end"""
 end
 
 function update_params(j)
     # change required - make the choosing of gamma and mu random
-    # check if this change needs to be done - when appending to the gamma history array, we need to input the ind in generate random corresponding to I_n, 
+    # check if this change needs to be done - when appending to the gamma history array, we need to input the index in generate random corresponding to I_n, 
     # right now it is functions_I cause there are no blocks; basically we need to generate lambda and mu for the i which belong to the block I_n however, 
     # it doesn't harm if it is generated for all i in I
     push!(vars.gamma_history, [])
     push!(vars.mu_history, [])
     for i in 1:functions_I
+        # if i in I_n do this
         push!(vars.gamma_history[j], generate_gamma(i,j))
+        # else 
+        #     push!(vars.gamma_history[j], vars.gamma_history[j-1][i])
     end
     for k in 1:functions_K
         push!(vars.mu_history[j], generate_mu(k,j))
     end
-    # append!(vars.gamma_history, [generate_random(epsilon, functions_I)])
-    # append!(vars.mu_history, [generate_random(epsilon, functions_K)])
 end
 
 function delete_task(ind, birth)

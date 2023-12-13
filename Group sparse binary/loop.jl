@@ -1,10 +1,8 @@
-# global epoch_found = false
 global epoch_array = []
 global prox_count_array = []
 
 for j in 1:iters
     println("j = ",j)
-    # println("theta = ", theta_main)
     global I_n = block_function(j,functions_I,1)
     global K_n = block_function(j,functions_K,1)
     println("block functions made")
@@ -27,7 +25,6 @@ for j in 1:iters
 
     if compute_epoch_bool == true
         if compute_epoch()
-            # global epoch_found = true
             push!(epoch_array,j)
             for i in 1:functions_I+functions_K
                 prox_call[i] = 0
