@@ -1,4 +1,4 @@
-struct variables
+mutable struct variables
     a::Vector{Vector{Float64}}
     a_star::Vector{Vector{Float64}}
     b::Vector{Vector{Float64}}
@@ -15,68 +15,76 @@ struct variables
     running_tasks::Vector{Vector{Any}}
     gamma_history::Vector{Any}
     mu_history::Vector{Any}
+    theta::Float64
+    prox_call_count::Int32
+    epoch_array::Vector{Int32}
+    store_x::Vector{Vector{Vector{Float64}}}
+    store_v::Vector{Vector{Vector{Float64}}}
+    prox_call::Vector{Int32}
+    x_residuals::Vector{Vector{Float64}}
+    x_residuals_avg::Vector{Float64}
+    f_values::Vector{Float64}
+    only_f_values::Vector{Float64}
+    dist_to_minima::Vector{Float64}
 end
+
+mutable struct parameters
+    I::Vector{Int64}
+    K::Vector{Int64}
+    mu_start::Vector{Float64}
+    mu_end::Vector{Float64}
+    mu_step::Vector{Float64}
+    gamma_start::Vector{Float64}
+    gamma_end::Vector{Float64}
+    gamma_step::Vector{Float64}
+    gamma_a::Vector{Float64}
+    gamma_b::Vector{Float64}
+    epsilon::Float64
+    mu_a::Vector{Float64}
+    mu_b::Vector{Float64}
+    constant_gamma::Float64
+    constant_mu::Float64
+    constant_g::Vector{Float64}
+    constant_m::Vector{Float64}
+    mu_k::Vector{Vector{Float64}}
+    beta_k::Vector{Float64}
+    compute_epoch_bool::Bool
+    record_residual::Bool       
+    record_func::Bool           
+    record_dist::Bool     
+    alpha_::Float64
+    beta_::Float64   
+    max_task_delay::Int64 
+    mapping_ping::Vector{Int64}
+    ping_array::Vector{Float64}  
+    q_datacenters::Int64
+end                       
 
 struct result
     x::Vector{Vector{Vector{Float64}}}
     v_star::Vector{Vector{Vector{Float64}}}
 end
+
+mutable struct dim_struct
+    num_func_I::Int64
+    num_func_K::Int64
+    dims_array_I::Vector{Int64}
+    dims_array_K::Vector{Int64}
+    d::Int64
+    iters::Int64
+end
+
+# Define the custom HingeDot function type
+struct HingeDot
+    beta::Vector{Float64}
+    mu::Vector{Vector{Float64}}
+    k::Int
     
-zeros_I = []
-zeros_K = []
-
-for i in 1:functions_I                     # I believe this is already generalised according to dimensions
-    append!(zeros_I, [zeros(dims_I[i])])
-end
-for i in 1:functions_K                     # I believe this is already generalised according to dimensions
-    append!(zeros_K, [zeros(dims_K[i])])
-end
-
-vars = variables(   zeros_I, 
-                    zeros_I, 
-                    zeros_K, 
-                    zeros_K,
-                    zeros_K, 
-                    zeros_I, 
-                    zeros_K, 
-                    zeros_I,
-                    zeros(functions_I),       
-                    zeros(functions_K),   
-                    [[],[]],     
-                    [0,0],       
-                    [[],[]],     
-                    [[],[]],     
-                    [],
-                    []
-                    )
-
-res = result(   [zeros_I],
-                [zeros_K])
-
-if randomize_initial == true
-    for i in 1:functions_I
-        res.x[1][i] = w[i]
+    function HingeDot(beta::Vector{Float64}, mu::Vector{Vector{Float64}}, k::Int)
+        if k < 1 || k > length(beta) || k > length(mu)
+            error("Invalid index k")
+        else
+            new(beta, mu, k)
+        end
     end
 end
-
-if initialize_with_zi == true
-    for i in 1:functions_I
-        res.x[1][i] = z[i]
-    end
-end
-
-global store_x = Vector{Vector{Vector{Float64}}}(undef, iters)
-global store_v = Vector{Vector{Vector{Float64}}}(undef, iters)
-
-global prox_call = []
-for i in 1:functions_I+functions_K
-    push!(prox_call,0)
-end
-
-global prox_call_count = 0
-
-global x_residuals = Vector{Vector{Float64}}([])
-global x_residuals_avg :: Vector{Float64} = []
-global f_values = []
-global only_f_values = []
-global dist_to_minima :: Vector{Float64} = []

@@ -1,26 +1,27 @@
-using LinearAlgebra
-using ProximalOperators
-using Random
+# A function to find the L2 norm of a vector                       
+norm_function = SqrNormL2(1)
 
-if L_function_bool == true
-    L = L_function          # Will this change the global variable L?
+# Implement the call method for the HingeDot function type
+function (f::HingeDot)(x)
+    linear_result = Linear(f.mu[f.k])(x)
+    hinge_loss_result = HingeLoss([f.beta[f.k]], 10)([linear_result])
+    return hinge_loss_result
 end
 
-function generate_random_array(q, p)
-    return rand(Float64, q) .* p
+function ProximalOperators.prox!(y, f::HingeDot, x, gamma)
+    datacenter_index = params.mapping_ping[f.k]
+    sleep_time = params.ping_array[datacenter_index]
+    n_error = randn()*0.005 #implies std_dev of normal error is 0.005 
+    sleep(abs(n_error) + sleep_time)
+    mu2 = SqrNormL2(2)(f.mu[f.k])
+    Lx = Linear(f.mu[f.k])(x)
+    p,v = prox(HingeLoss([f.beta[f.k]], 10), [Lx], gamma)
+    p = p[1]
+    p = p - Lx
+    p = p*f.mu[f.k] #L*(v \in R^1) = v mu_k
+    y .= (x + (1/mu2)*p)
+    return f(y)
 end
-
-function initialise()
-    global L = fill(fill(1.0,m),p)
-    global functions_I = m
-    global functions_K = p
-    global dims_I = fill(d,m)
-    global dims_K = fill(d,p)
-    global mapping_ping = rand(1:100, p)
-    global ping_array = generate_random_array(q_datacenters, 0.05)
-end
-
-initialise()
 
 function generate_G_x(m, d)
     g = [Int[] for _ in 1:m]
@@ -47,18 +48,18 @@ function generate_G_x(m, d)
 end
 
 function calculate_mu_beta()
-    G, original_x = generate_G_x(m, d)
+    G, original_x = generate_G_x(dimensions.num_func_I, dimensions.d)
     original_y = sum(original_x, dims=1)[1]
-    d_one = fill(1.0, d)
+    d_one = fill(1.0, dimensions.d)
     
-    for _ in 1:p
-        random_vector = randn(Float64, d)
+    for _ in 1:dimensions.num_func_K
+        random_vector = randn(Float64, dimensions.d)
         rnorm = NormL2(1)(random_vector)
         random_vector = random_vector/rnorm
-        push!(mu_k, random_vector)
+        push!(params.mu_k, random_vector)
     end
     w_temp = []
-    for i in 1:p
+    for i in 1:dimensions.num_func_K
         if i%4==0
             push!(w_temp, -1)
         else
@@ -67,8 +68,8 @@ function calculate_mu_beta()
     end
     w = shuffle(w_temp)
 
-    for i in 1:p
-        push!(beta_k, w[i]*sign(dot(mu_k[i], original_y)))
+    for i in 1:dimensions.num_func_K
+        push!(params.beta_k, w[i]*sign(dot(params.mu_k[i], original_y)))
     end
 
 end
@@ -76,15 +77,15 @@ end
 function rearrange(L::Vector{Vector{Vector}})
     L_star::Vector{Vector{Vector}} = []
     temp = []
-    for i in 1:functions_I
-        for k in 1:functions_K
+    for i in 1:dimensions.num_func_I
+        for k in 1:dimensions.num_func_K
             push!(temp, L[k][i])
         end
     end
-    for i in 1:functions_I
+    for i in 1:dimensions.num_func_I
         push!(L_star, [])
-        for k in 1:functions_K
-            push!(L_star[i], temp[functions_K*(i-1) + k])
+        for k in 1:dimensions.num_func_K
+            push!(L_star[i], temp[dimensions.num_func_K*(i-1) + k])
         end
     end
     return L_star
@@ -93,16 +94,16 @@ end
 function rearrange(L::Vector{Vector{Matrix{Float64}}})
     L_star::Vector{Vector{Matrix}} = []
     temp = []
-    for i in 1:functions_I
-        for k in 1:functions_K
+    for i in 1:dimensions.num_func_I
+        for k in 1:dimensions.num_func_K
             new_matrix = L[k][i]'
             push!(temp, new_matrix)
         end
     end
-    for i in 1:functions_I
+    for i in 1:dimensions.num_func_I
         push!(L_star, [])
-        for k in 1:functions_K
-            push!(L_star[i], temp[functions_K*(i-1) + k])
+        for k in 1:dimensions.num_func_K
+            push!(L_star[i], temp[dimensions.num_func_K*(i-1) + k])
         end
     end
     return L_star
@@ -111,15 +112,15 @@ end
 function rearrange(L::Vector{Vector{Int64}})
     L_star::Vector{Vector{Int64}} = []
     temp::Vector{Int64} = []
-    for i in 1:functions_I
-        for k in 1:functions_K
+    for i in 1:dimensions.num_func_I
+        for k in 1:dimensions.num_func_K
             push!(temp, L[k][i])
         end
     end
-    for i in 1:functions_I
+    for i in 1:dimensions.num_func_I
         push!(L_star, [])
-        for k in 1:functions_K
-            push!(L_star[i], temp[functions_K*(i-1) + k])
+        for k in 1:dimensions.num_func_K
+            push!(L_star[i], temp[dimensions.num_func_K*(i-1) + k])
         end
     end
     return L_star
@@ -128,15 +129,15 @@ end
 function rearrange(L::Vector{Vector{Float64}})
     L_star::Vector{Vector{Float64}} = []
     temp::Vector{Float64} = []
-    for i in 1:functions_I
-        for k in 1:functions_K
+    for i in 1:dimensions.num_func_I
+        for k in 1:dimensions.num_func_K
             push!(temp, L[k][i])
         end
     end
-    for i in 1:functions_I
+    for i in 1:dimensions.num_func_I
         push!(L_star, [])
-        for k in 1:functions_K
-            push!(L_star[i], temp[functions_K*(i-1) + k])
+        for k in 1:dimensions.num_func_K
+            push!(L_star[i], temp[dimensions.num_func_K*(i-1) + k])
         end
     end
     return L_star
@@ -145,16 +146,16 @@ end
 function rearrange(L::Vector{Vector{Function}})
     L_star::Vector{Vector{Function}} = []
     temp = []
-    for i in 1:functions_I
-        for k in 1:functions_K
+    for i in 1:dimensions.num_func_I
+        for k in 1:dimensions.num_func_K
             new_matrix = L_star_function[k][i]
             push!(temp, new_matrix)
         end
     end
-    for i in 1:functions_I
+    for i in 1:dimensions.num_func_I
         push!(L_star, [])
-        for k in 1:functions_K
-            push!(L_star[i], temp[functions_K*(i-1) + k])
+        for k in 1:dimensions.num_func_K
+            push!(L_star[i], temp[dimensions.num_func_K*(i-1) + k])
         end
     end
     return L_star
@@ -163,8 +164,6 @@ end
 function rearrange(mat::Matrix)
     return mat'
 end
-
-L_transpose = rearrange(L)
 
 function define_mu_beta(p::Int64, d::Int64, original_y::Vector{Float64}) 
     mu_temp::Vector{Vector{Float64}} = []
@@ -208,9 +207,6 @@ function get_block_cyclic(n::Int64, m::Int64 = 20, M::Int64 = 5)
     end
     return arr
 end
-
-# A function to find the L2 norm of a vector                       
-norm_function = SqrNormL2(1)
 
 function linear_operator_sum(function_array::Vector{Vector}, x, tr)
     n = length(x)
@@ -308,63 +304,63 @@ function matrix_dot_product(v::Vector{Float64}, u::Vector{Vector{Float64}})
 end
 
 function generate_gamma_constant(i,j)
-    return constant_g[i]
+    return params.constant_g[i]
 end
 
 function generate_mu_constant(k,j)
-    return constant_m[k]
+    return params.constant_m[k]
 end
 
 function generate_gamma_seq(i,j)
     if j == 1
-        return 1/epsilon
+        return 1/params.epsilon
     else
-        if vars.gamma_history[j-1][i] == epsilon
-            return epsilon
-        elseif ((1/epsilon) - 0.1*(j-1)) <= epsilon
-            return epsilon
+        if vars.gamma_history[j-1][i] == params.epsilon
+            return params.epsilon
+        elseif ((1/params.epsilon) - 0.1*(j-1)) <= params.epsilon
+            return params.epsilon
         else
-            return ((1/epsilon) - 0.1*(j-1))
+            return ((1/params.epsilon) - 0.1*(j-1))
         end
     end
 end
 
 function generate_mu_seq(k,j)
     if j == 1
-        return 1/epsilon
+        return 1/params.epsilon
     else
-        if vars.mu_history[j-1][k] == epsilon
-            return epsilon
-        elseif ((1/epsilon) - 0.1*(j-1)) <= epsilon
-            return epsilon
+        if vars.mu_history[j-1][k] == params.epsilon
+            return params.epsilon
+        elseif ((1/params.epsilon) - 0.1*(j-1)) <= params.epsilon
+            return params.epsilon
         else
-            return ((1/epsilon) - 0.1*(j-1))   # in future we can also set the subtraction constant different for different i and k using the constant arrays made in main.jl
+            return ((1/params.epsilon) - 0.1*(j-1))   # in future we can also set the subtraction constant different for different i and k using the constant arrays made in main.jl
         end
     end
 end
 
 function generate_gamma_linear_decrease(i, j)
-    return max(gamma_end[i], (gamma_start[i] - gamma_step[i] * (j - 1)))
+    return max(params.gamma_end[i], (params.gamma_start[i] - params.gamma_step[i] * (j - 1)))
 end
 
 function generate_mu_linear_decrease(k, j)
-    return max(mu_end[k], (mu_start[k] - mu_step[k] * (j - 1)))
+    return max(params.mu_end[k], (params.mu_start[k] - params.mu_step[k] * (j - 1)))
 end
 
 function generate_gamma_random(i, j)
-    return epsilon + ((1/epsilon - epsilon) * rand())
+    return params.epsilon + ((1/params.epsilon - params.epsilon) * rand())
 end
 
 function generate_mu_random(k, j)
-    return epsilon + ((1/epsilon - epsilon) * rand())
+    return params.epsilon + ((1/params.epsilon - params.epsilon) * rand())
 end
 
 function generate_gamma_nonlinear_decrease(i, j)
-    return gamma_a[i] + (gamma_b[i] * (1/j))
+    return params.gamma_a[i] + (params.gamma_b[i] * (1/j))
 end
 
 function generate_mu_nonlinear_decrease(k, j)
-    return mu_a[k] + (mu_b[k] * (1/j))
+    return params.mu_a[k] + (params.mu_b[k] * (1/j))
 end
 
 function get_L(mat::AbstractMatrix, ind)
@@ -379,7 +375,7 @@ function check_task_delay(j)
     #Checking if a task has been delayed for too long
     if j>1
         for b in 1:vars.tasks_num[1]
-            if vars.birthdates[1][b]<j-D
+            if vars.birthdates[1][b]<j-params.max_task_delay
                 newvals=fetch(vars.running_tasks[1][b])
                 task_no = vars.task_number[1][b]
                 vars.a[task_no] , y= newvals 
@@ -387,7 +383,7 @@ function check_task_delay(j)
             end
         end
         for b in 1:vars.tasks_num[2]
-            if vars.birthdates[2][b]<j-D
+            if vars.birthdates[2][b]<j-params.max_task_delay
                 newvals=fetch(vars.running_tasks[2][b])
                 task_no = vars.task_number[2][b]
                 vars.b[task_no] , y= newvals 
@@ -412,10 +408,10 @@ function compute(j, ind)
                 delete_task(ind, birth)
         
             if ind==2
-                vars.t[task] = vars.b[task] - matrix_dot_product(get_L(L, task), vars.a)
+                vars.t[task] = vars.b[task] - matrix_dot_product(get_L(L_operator, task), vars.a)
                 vars.sum_k[task] = (norm_function(vars.t[task]))*2               
             else
-                vars.t_star[task] = vars.a_star[task] +  matrix_dot_product(get_L(L_transpose, task), vars.b_star)
+                vars.t_star[task] = vars.a_star[task] +  matrix_dot_product(get_L(L_operator_transpose, task), vars.b_star)
                 vars.sum_i[task] = (norm_function(vars.t_star[task]))*2
             end
         else
@@ -434,83 +430,83 @@ function custom_prox(t, f, y, gamma)
     return a,b
 end
 
-function define_tasks(j)    
+function define_tasks(j)
     #schedule a new task in each iteration for each i in I, and append it to the running tasks vector
-    for i in I_n                  # change  - incorporated blocks into this, now running over entire I_n
-            vars.l_star[i] = matrix_dot_product(get_L(L_transpose, i), res.v_star[j]) 
+    for i in params.I                  # change  - incorporated blocks into this, now running over entire params.I 
+            vars.l_star[i] = matrix_dot_product(get_L(L_operator_transpose, i), res.v_star[j]) 
             delay = 0
             local task = @task custom_prox(delay,functions[i], res.x[j][i]-vars.l_star[i]*vars.gamma_history[j][i] ,vars.gamma_history[j][i])
-            prox_call[i] = 1
-            global prox_call_count += 1
+            vars.prox_call[i] = 1
+            vars.prox_call_count += 1
             add_task(task, 1, j, i)
     end
 
-    for k in K_n
-            vars.l[k] = matrix_dot_product(get_L(L, k), res.x[j])
+    for k in params.K 
+            vars.l[k] = matrix_dot_product(get_L(L_operator, k), res.x[j])
             delay = 0
-            local task = @task custom_prox(delay, functions[functions_I+k], vars.l[k] + vars.mu_history[j][k]*res.v_star[j][k], vars.mu_history[j][k])
-            prox_call[functions_I+k] = 1
-            global prox_call_count += 1
+            local task = @task custom_prox(delay, functions[dimensions.num_func_I+k], vars.l[k] + vars.mu_history[j][k]*res.v_star[j][k], vars.mu_history[j][k])
+            vars.prox_call[dimensions.num_func_I+k] = 1
+            vars.prox_call_count += 1
             add_task(task, 2, j, k)
     end
 end
 
-function calc_theta(j)                                          # no change required hopefully
-    lambda = 1/(j-alpha) + beta
+function calc_theta(j)
+    lambda = 1/(j-params.alpha_) + params.beta_
     tau = 0
-    for i in 1:functions_I
+    for i in 1:dimensions.num_func_I
         tau = tau + vars.sum_i[i] 
     end
 
-    for k in 1:functions_K
+    for k in 1:dimensions.num_func_K
         tau = tau+vars.sum_k[k]
     end
 
-    global theta = 0
+    vars.theta = 0.0
 
     # Calculating theta
     if tau > 0
         sum = 0
         # Finding the sum of the dot products related to the I set
-        for i in 1:functions_I
+        for i in 1:dimensions.num_func_I
             sum = sum+dot(res.x[j][i], vars.t_star[i])-dot(vars.a[i],vars.a_star[i])
         end
         # Finding the sum of the dot products related to the K set
-        for k in 1:functions_K
+        for k in 1:dimensions.num_func_K
             sum = sum+dot(vars.t[k],res.v_star[j][k])-dot(vars.b[k],vars.b_star[k])
         end
         # Using the 2 sums to find theta according to the formula
-        theta = lambda*max(0,sum)/tau
+        vars.theta = lambda*max(0,sum)/tau
     end
 end
 
 function update_vars(j)
     x = res.x[j]
-    for i in 1:functions_I
-        x[i] = res.x[j][i] - theta*vars.t_star[i]
+    for i in 1:dimensions.num_func_I
+        x[i] = res.x[j][i] - vars.theta*vars.t_star[i]
     end
     push!(res.x, x)
     v_star = res.v_star[j]
-    for k in 1:functions_K
-        v_star[k] = res.v_star[j][k] - theta*vars.t[k]
+    for k in 1:dimensions.num_func_K
+        v_star[k] = res.v_star[j][k] - vars.theta*vars.t[k]
     end
     push!(res.v_star, v_star)
 end
 
 function update_params(j)
     # change required - make the choosing of gamma and mu random
-    # check if this change needs to be done - when appending to the gamma history array, we need to input the index in generate random corresponding to I_n, 
-    # right now it is functions_I cause there are no blocks; basically we need to generate lambda and mu for the i which belong to the block I_n however, 
+    # check if this change needs to be done - when appending to the gamma history array, we need to input the index in generate random corresponding to params.I , 
+    # right now it is dimensions.num_func_I cause there are no blocks; basically we need to generate lambda and mu for the i which belong to the block params.I  however, 
     # it doesn't harm if it is generated for all i in I
     push!(vars.gamma_history, [])
     push!(vars.mu_history, [])
-    for i in 1:functions_I
-        # if i in I_n do this
+    for i in 1:dimensions.num_func_I
+        # if i in params.I do this
         push!(vars.gamma_history[j], generate_gamma(i,j))
         # else 
         #     push!(vars.gamma_history[j], vars.gamma_history[j-1][i])
     end
-    for k in 1:functions_K
+    for k in 1:dimensions.num_func_K
         push!(vars.mu_history[j], generate_mu(k,j))
     end
 end
@@ -535,29 +531,26 @@ function write(j)
     if j==1
         mode = "w"
     end
-    store_x[j] = Vector{Vector{Float64}}(undef, functions_I)
-    store_v[j] = Vector{Vector{Float64}}(undef, functions_K)
-    for i in 1:functions_I
-        store_x[j][i] = res.x[j][i]
-        # open("x" * string(i,base = 10) * ".txt",mode) do io
-        #     println(io,res.x[j][i])
-        # end
+    vars.store_x[j] = Vector{Vector{Float64}}(undef, dimensions.num_func_I)
+    vars.store_v[j] = Vector{Vector{Float64}}(undef, dimensions.num_func_K)
+    for i in 1:dimensions.num_func_I
+        vars.store_x[j][i] = res.x[j][i]
     end
-    for k in 1:functions_K
-        store_v[j][k] = matrix_dot_product(get_L(L, k), res.x[j])
+    for k in 1:dimensions.num_func_K
+        vars.store_v[j][k] = matrix_dot_product(get_L(L_operator, k), res.x[j])
     end
 end
 
 function check_feasibility()
     feasible = true
-    for i in 1:functions_I
-        if(functions[i](res.x[iters][i])==Inf)
+    for i in 1:dimensions.num_func_I
+        if(functions[i](res.x[dimensions.iters][i])==Inf)
             feasible = false
         end
     end
 
-    for k in 1:functions_K
-        if(functions[functions_I + k](matrix_dot_product(get_L(L, k), res.x[iters]))==Inf)
+    for k in 1:dimensions.num_func_K
+        if(functions[dimensions.num_func_I + k](matrix_dot_product(get_L(L_operator, k), res.x[dimensions.iters]))==Inf)
             feasible = false
         end
     end
@@ -569,11 +562,11 @@ function get_accuracy()
     print("Final ans: ")
 
     x_res = []
-    for i in 1:functions_I
-        push!(x_res,res.x[iters][i])
+    for i in 1:dimensions.num_func_I
+        push!(x_res,res.x[dimensions.iters][i])
     end
     println(size(x_res))
-    y_pred::Vector{Float64} = fill(0.0, d)
+    y_pred::Vector{Float64} = fill(0.0, dimensions.d)
 
     for j in 1:length(x_res)
         y_pred += x_res[j]
@@ -582,19 +575,19 @@ function get_accuracy()
     beta_res = Float64[]                                             #The predicted beta (classifications)
     corr_pred::Float64 = 0                                           #the correct predictions count
 
-    for i in 1:p
-        push!(beta_res, sign(dot(mu_k[i], y_pred)))
-        if beta_res[i] == beta_k[i]
+    for i in 1:dimensions.num_func_K
+        push!(beta_res, sign(dot(params.mu_k[i], y_pred)))
+        if beta_res[i] == params.beta_k[i]
             corr_pred+=1
         end
     end
 
-    println("Correct predictions = ", corr_pred, "\nAccuracy = ", (corr_pred / p))
+    println("Correct predictions = ", corr_pred, "\nAccuracy = ", (corr_pred / dimensions.num_func_K))
 end
 
 function compute_epoch()
-    for i in 1:functions_I+functions_K
-        if prox_call[i] == 0
+    for i in 1:dimensions.num_func_I+dimensions.num_func_K
+        if vars.prox_call[i] == 0
             return false
         end
     end
@@ -603,146 +596,146 @@ end
 
 function record()
     if record_method == "0"
-        if record_residual == true
-            for j in 2:iters
+        if params.record_residual == true
+            for j in 2:dimensions.iters
                 temp = []
                 sum = 0
-                for i in 1:functions_I
-                    push!(temp, SqrNormL2(1)(store_x[j][i] - store_x[j-1][i]))
-                    sum+=SqrNormL2(1)(store_x[j][i] - store_x[j-1][i])
+                for i in 1:dimensions.num_func_I
+                    push!(temp, SqrNormL2(1)(vars.store_x[j][i] - vars.store_x[j-1][i]))
+                    sum+=SqrNormL2(1)(vars.store_x[j][i] - vars.store_x[j-1][i])
                 end 
-                push!(x_residuals_avg, sum/functions_I)
-                push!(x_residuals, temp)
+                push!(vars.x_residuals_avg, sum/dimensions.num_func_I)
+                push!(vars.x_residuals, temp)
             end
-            println("\nx_residuals_avg is ", x_residuals_avg)
-            println("\nx_residuals is ", x_residuals)
+            println("\nx_residuals_avg is ", vars.x_residuals_avg)
+            println("\nx_residuals is ", vars.x_residuals)
         end
-        if record_dist == true
-            for j in 1:iters
-                push!(dist_to_minima, NormL2(1)(store_x[j] - store_x[iters]))
+        if params.record_dist == true
+            for j in 1:dimensions.iters
+                push!(vars.dist_to_minima, NormL2(1)(vars.store_x[j] - vars.store_x[dimensions.iters]))
             end
-            println("\ndist to minima is ", dist_to_minima)
+            println("\ndist to minima is ", vars.dist_to_minima)
         end
-        if record_func == true
-            for j in 1:iters
+        if params.record_func == true
+            for j in 1:dimensions.iters
                 sum = 0
-                for i in 1:functions_I
-                    sum+= (functions[i](store_x[j][i]) - functions[i](store_x[iters][i]))
+                for i in 1:dimensions.num_func_I
+                    sum+= (functions[i](vars.store_x[j][i]) - functions[i](vars.store_x[dimensions.iters][i]))
                 end
-                for k in 1:functions_K
-                    sum+= functions[functions_I+k](store_v[j][k]) - functions[functions_I+k](store_v[iters][k])            
+                for k in 1:dimensions.num_func_K
+                    sum+= functions[dimensions.num_func_I+k](vars.store_v[j][k]) - functions[dimensions.num_func_I+k](vars.store_v[dimensions.iters][k])            
                 end
-                push!(f_values, abs(sum))
+                push!(vars.f_values, abs(sum))
             end
-            for j in 1:iters
+            for j in 1:dimensions.iters
                 sum = 0
-                for i in 1:functions_I
-                    sum+= (functions[i](store_x[j][i]))
+                for i in 1:dimensions.num_func_I
+                    sum+= (functions[i](vars.store_x[j][i]))
                 end
-                for k in 1:functions_K
-                    sum+= (functions[functions_I+k](store_v[j][k]))            
+                for k in 1:dimensions.num_func_K
+                    sum+= (functions[dimensions.num_func_I+k](vars.store_v[j][k]))            
                 end
-                push!(only_f_values, sum)
+                push!(vars.only_f_values, sum)
             end
-            println("\nf_values is ", f_values)
-            println("\nonly_f_values is ", only_f_values)
+            println("\nf_values is ", vars.f_values)
+            println("\nonly_f_values is ", vars.only_f_values)
         end
     end
     if record_method == "1"
-        if record_residual == true
-            for j in epoch_array
+        if params.record_residual == true
+            for j in vars.epoch_array
                 if j != 1
                     temp = []
                     sum = 0
-                    for i in 1:functions_I
-                        push!(temp, SqrNormL2(1)(store_x[j][i] - store_x[j-1][i]))
-                        sum+=SqrNormL2(1)(store_x[j][i] - store_x[j-1][i])
+                    for i in 1:dimensions.num_func_I
+                        push!(temp, SqrNormL2(1)(vars.store_x[j][i] - vars.store_x[j-1][i]))
+                        sum+=SqrNormL2(1)(vars.store_x[j][i] - vars.store_x[j-1][i])
                     end
-                    push!(x_residuals, temp)
-                    push!(x_residuals_avg, sum/functions_I)
+                    push!(vars.x_residuals, temp)
+                    push!(vars.x_residuals_avg, sum/dimensions.num_func_I)
                 end
             end
-            println("\nx_residuals_avg is ", x_residuals_avg)
-            println("\nx_residuals is ", x_residuals)
+            println("\nx_residuals_avg is ", vars.x_residuals_avg)
+            println("\nx_residuals is ", vars.x_residuals)
         end
-        if record_dist == true
-            for j in epoch_array
-                push!(dist_to_minima, NormL2(1)(store_x[j] - store_x[iters]))
+        if params.record_dist == true
+            for j in vars.epoch_array
+                push!(vars.dist_to_minima, NormL2(1)(vars.store_x[j] - vars.store_x[dimensions.iters]))
             end
-            println("\ndist to minima is ", dist_to_minima)
+            println("\ndist to minima is ", vars.dist_to_minima)
         end
-        if record_func == true
-            for j in epoch_array
+        if params.record_func == true
+            for j in vars.epoch_array
                 sum = 0
-                for i in 1:functions_I
-                    sum+= (functions[i](store_x[j][i]) - functions[i](store_x[iters][i]))
+                for i in 1:dimensions.num_func_I
+                    sum+= (functions[i](vars.store_x[j][i]) - functions[i](vars.store_x[dimensions.iters][i]))
                 end
-                for k in 1:functions_K
-                    sum+= functions[functions_I+k](store_v[j][k]) - functions[functions_I+k](store_v[iters][k])            
+                for k in 1:dimensions.num_func_K
+                    sum+= functions[dimensions.num_func_I+k](vars.store_v[j][k]) - functions[dimensions.num_func_I+k](vars.store_v[dimensions.iters][k])            
                 end
-                push!(f_values, abs(sum))
+                push!(vars.f_values, abs(sum))
             end
-            for j in epoch_array
+            for j in vars.epoch_array
                 sum = 0
-                for i in 1:functions_I
-                    sum+= functions[i](store_x[j][i])
+                for i in 1:dimensions.num_func_I
+                    sum+= functions[i](vars.store_x[j][i])
                 end
-                for k in 1:functions_K
-                    sum+= functions[functions_I+k](store_v[j][k])         
+                for k in 1:dimensions.num_func_K
+                    sum+= functions[dimensions.num_func_I+k](vars.store_v[j][k])         
                 end
-                push!(only_f_values, sum)
+                push!(vars.only_f_values, sum)
             end
-            println("\nf_values is ", f_values)
-            println("\nonly_f_values is ", only_f_values)
+            println("\nf_values is ", vars.f_values)
+            println("\nonly_f_values is ", vars.only_f_values)
         end
     end
     if record_method == "2"
-        if record_residual == true
-            for j in 1:iters
+        if params.record_residual == true
+            for j in 1:dimensions.iters
                 temp = []
                 if j == 1
-                    for i in 1:functions_I
+                    for i in 1:dimensions.num_func_I
                         push!(temp, 0.0)
                     end
                 else
-                    for i in 1:functions_I
-                        push!(temp, SqrNormL2(1)(store_x[j][i] - store_x[j-1][i]))
+                    for i in 1:dimensions.num_func_I
+                        push!(temp, SqrNormL2(1)(vars.store_x[j][i] - vars.store_x[j-1][i]))
                     end
                 end
-                push!(x_residuals, temp)
+                push!(vars.x_residuals, temp)
             end
-            println("\nx_residuals_avg is ", x_residuals_avg)
-            println("\nx_residuals is ", x_residuals)
+            println("\nx_residuals_avg is ", vars.x_residuals_avg)
+            println("\nx_residuals is ", vars.x_residuals)
         end
-        if record_dist == true
-            for j in 1:iters
-                push!(dist_to_minima, NormL2(1)(store_x[j] - store_x[iters]))
+        if params.record_dist == true
+            for j in 1:dimensions.iters
+                push!(vars.dist_to_minima, NormL2(1)(vars.store_x[j] - vars.store_x[dimensions.iters]))
             end
-            println("\ndist to minima is ", dist_to_minima)
+            println("\ndist to minima is ", vars.dist_to_minima)
         end
-        if record_func == true
-            for j in 1:iters
+        if params.record_func == true
+            for j in 1:dimensions.iters
                 sum = 0
-                for i in 1:functions_I
-                    sum+= (functions[i](store_x[j][i]) - functions[i](store_x[iters][i]))
+                for i in 1:dimensions.num_func_I
+                    sum+= (functions[i](vars.store_x[j][i]) - functions[i](vars.store_x[dimensions.iters][i]))
                 end
-                for k in 1:functions_K
-                    sum+= functions[functions_I+k](store_v[j][k]) - functions[functions_I+k](store_v[iters][k])            
+                for k in 1:dimensions.num_func_K
+                    sum+= functions[dimensions.num_func_I+k](vars.store_v[j][k]) - functions[dimensions.num_func_I+k](vars.store_v[dimensions.iters][k])            
                 end
-                push!(f_values, abs(sum))
+                push!(vars.f_values, abs(sum))
             end
-            for j in 1:iters
+            for j in 1:dimensions.iters
                 sum = 0
-                for i in 1:functions_I
-                    sum+=(functions[i](store_x[j][i]))
+                for i in 1:dimensions.num_func_I
+                    sum+=(functions[i](vars.store_x[j][i]))
                 end
-                for k in 1:functions_K
-                    sum+=(functions[functions_I+k](store_v[j][k]))            
+                for k in 1:dimensions.num_func_K
+                    sum+=(functions[dimensions.num_func_I+k](vars.store_v[j][k]))            
                 end
-                push!(only_f_values, sum)
+                push!(vars.only_f_values, sum)
             end
-            println("\nf_values is ", f_values)
-            println("\nonly_f_values is ", only_f_values)
+            println("\nf_values is ", vars.f_values)
+            println("\nonly_f_values is ", vars.only_f_values)
         end
     end
 end

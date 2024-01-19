@@ -1,37 +1,32 @@
-global epoch_array = []
-global prox_count_array = []
+vars.epoch_array = []
 
-for j in 1:iters
+for j in 1:dimensions.iters
     println("j = ",j)
-    global I_n = block_function(j,functions_I,1)
-    global K_n = block_function(j,functions_K,1)
-    println("block functions made")
+    params.I  = block_function(j,dimensions.num_func_I,1)
+    params.K = block_function(j,dimensions.num_func_K,1)
+    # println("block functions made")
     update_params(j)
-    println("parameters updated")
+    # println("parameters updated")
     check_task_delay(j)
-    println("task delay checked")
+    # println("task delay checked")
     define_tasks(j)
-    println("tasks defined")
+    # println("tasks defined")
     compute(j, 1)
-    println("computed j, 1")
+    # println("computed j, 1")
     compute(j, 2)
-    println("computed j, 2")
+    # println("computed j, 2")
     calc_theta(j)
-    println("calculated theta")
+    # println("calculated theta")
     write(j)
     update_vars(j)
-    println("updated vars(j)\n")
-    push!(prox_count_array,prox_call_count)
+    # println("updated vars(j)\n")
 
-    if compute_epoch_bool == true
+    if params.compute_epoch_bool == true
         if compute_epoch()
-            push!(epoch_array,j)
-            for i in 1:functions_I+functions_K
-                prox_call[i] = 0
+            push!(vars.epoch_array,j)
+            for i in 1:dimensions.num_func_I+dimensions.num_func_K
+                vars.prox_call[i] = 0
             end
         end
     end
 end
-global final_ans = res.x[iters]
-record()
-
