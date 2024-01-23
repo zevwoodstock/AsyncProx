@@ -1,0 +1,8 @@
+name = "AsyncProx"
+version = "0.1.0"
+
+[deps]
+ProximalOperators = "0.15.3"
+
+[compat]
+julia = "1.9"
