@@ -737,3 +737,23 @@ function record()
         end
     end
 end
+
+function print_params()
+    println()
+    println("-------------------------------------------------------------------")
+    println("Parameters used were:")
+    println("L_function_bool = ", L_function_bool)
+    println("num_func_I = ", dimensions.num_func_I)
+    println("d = ", dimensions.d)
+    println("num_func_K = ", dimensions.num_func_K)
+    println("q_datacenters = ", params.q_datacenters)
+    println("iters = ", dimensions.iters)
+    println("max_task_delay = ", params.max_task_delay)
+    println("alpha = ", params.alpha_)
+    println("beta = ", params.beta_)
+    println("compute_epoch_bool = ", params.compute_epoch_bool)
+    println("record_residual = ", params.record_residual)
+    println("record_func = ", params.record_func)
+    println("record_dist = ", params.record_dist)
+    println("record_method = ", record_method)
+end
