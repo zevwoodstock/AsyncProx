@@ -435,7 +435,8 @@ function define_tasks(j)
     for i in params.I                  # change  - incorporated blocks into this, now running over entire params.I 
             vars.l_star[i] = matrix_dot_product(get_L(L_operator_transpose, i), res.v_star[j]) 
             delay = 0
-            local task = @task custom_prox(delay,functions[i], res.x[j][i]-vars.l_star[i]*vars.gamma_history[j][i] ,vars.gamma_history[j][i])
+            local task = Task(() -> custom_prox(delay, functions[i], res.x[j][i] - vars.l_star[i]*vars.gamma_history[j][i], vars.gamma_history[j][i]))
+            task.sticky = false
             vars.prox_call[i] = 1
             vars.prox_call_count += 1
             add_task(task, 1, j, i)
@@ -444,7 +445,8 @@ function define_tasks(j)
     for k in params.K 
             vars.l[k] = matrix_dot_product(get_L(L_operator, k), res.x[j])
             delay = 0
-            local task = @task custom_prox(delay, functions[dimensions.num_func_I+k], vars.l[k] + vars.mu_history[j][k]*res.v_star[j][k], vars.mu_history[j][k])
+            local task = Task(() -> custom_prox(delay, functions[dimensions.num_func_I+k], vars.l[k] + vars.mu_history[j][k]*res.v_star[j][k], vars.mu_history[j][k]))
+            task.sticky = false
             vars.prox_call[dimensions.num_func_I+k] = 1
             vars.prox_call_count += 1
             add_task(task, 2, j, k)
