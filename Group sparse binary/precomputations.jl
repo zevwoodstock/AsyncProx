@@ -7,6 +7,10 @@ dimensions.dims_array_I = fill(dimensions.d, dimensions.num_func_I)
 dimensions.dims_array_K = fill(dimensions.d, dimensions.num_func_K)
 L_matrix = fill(fill(1.0, dimensions.num_func_I), dimensions.num_func_K)
 
+conditions = []
+push!(conditions, [Condition() for _ in 1:dimensions.num_func_I])
+push!(conditions, [Condition() for _ in 1:dimensions.num_func_K])
+
 if L_function_bool == true
     L_operator = L_function
 else
@@ -15,7 +19,7 @@ end
 
 L_operator_transpose = rearrange(L_operator)
 
-if record_method == "1"
+if record_method == 1
     params.compute_epoch_bool = true
 end
 

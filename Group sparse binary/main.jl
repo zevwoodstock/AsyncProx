@@ -1,6 +1,7 @@
 using LinearAlgebra
 using ProximalOperators
 using Random
+println("execution started")
 
 include("variables.jl")
 include("functions.jl")

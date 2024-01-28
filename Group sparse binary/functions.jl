@@ -593,7 +593,7 @@ function compute_epoch()
 end
 
 function record()
-    if record_method == "0"
+    if record_method == 0
         if params.record_residual == true
             for j in 2:dimensions.iters
                 temp = []
@@ -639,7 +639,7 @@ function record()
             println("\nonly_f_values is ", vars.only_f_values)
         end
     end
-    if record_method == "1"
+    if record_method == 1
         if params.record_residual == true
             for j in vars.epoch_array
                 if j != 1
@@ -687,7 +687,7 @@ function record()
             println("\nonly_f_values is ", vars.only_f_values)
         end
     end
-    if record_method == "2"
+    if record_method == 2
         if params.record_residual == true
             for j in 1:dimensions.iters
                 temp = []
