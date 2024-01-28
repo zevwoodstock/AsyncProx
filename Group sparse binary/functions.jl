@@ -424,8 +424,8 @@ function soft_threshold(x::Vector{Float64}, gamma::Float64)
     return sign.(x) .* max.(abs.(x) .- gamma, 0)
 end
 
-function custom_prox(t, f, y, gamma)
-    sleep(t)
+function custom_prox(ind, i, f, y, gamma)
+    notify(conditions[ind][i])
     a,b = prox(f,y,gamma)
     return a,b
 end
@@ -434,9 +434,7 @@ function define_tasks(j)
     #schedule a new task in each iteration for each i in I, and append it to the running tasks vector
     for i in params.I                  # change  - incorporated blocks into this, now running over entire params.I 
             vars.l_star[i] = matrix_dot_product(get_L(L_operator_transpose, i), res.v_star[j]) 
-            delay = 0
-            local task = Task(() -> custom_prox(delay, functions[i], res.x[j][i] - vars.l_star[i]*vars.gamma_history[j][i], vars.gamma_history[j][i]))
-            task.sticky = false
+            local task = @async custom_prox(1, i, functions[i], res.x[j][i] - vars.l_star[i]*vars.gamma_history[j][i], vars.gamma_history[j][i])
             vars.prox_call[i] = 1
             vars.prox_call_count += 1
             add_task(task, 1, j, i)
@@ -444,9 +442,7 @@ function define_tasks(j)
 
     for k in params.K 
             vars.l[k] = matrix_dot_product(get_L(L_operator, k), res.x[j])
-            delay = 0
-            local task = Task(() -> custom_prox(delay, functions[dimensions.num_func_I+k], vars.l[k] + vars.mu_history[j][k]*res.v_star[j][k], vars.mu_history[j][k]))
-            task.sticky = false
+            local task = @async custom_prox(2, k, functions[dimensions.num_func_I+k], vars.l[k] + vars.mu_history[j][k]*res.v_star[j][k], vars.mu_history[j][k])
             vars.prox_call[dimensions.num_func_I+k] = 1
             vars.prox_call_count += 1
             add_task(task, 2, j, k)
@@ -521,11 +517,11 @@ function delete_task(ind, birth)
 end
 
 function add_task(task, ind, j, i)
-    schedule(task)
     push!(vars.running_tasks[ind], task)
     push!(vars.birthdates[ind], j)
     push!(vars.task_number[ind], i)
     vars.tasks_num[ind] = vars.tasks_num[ind] + 1
+    wait(conditions[ind][i])
 end
 
 function write(j)

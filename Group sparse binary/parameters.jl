@@ -9,13 +9,16 @@ dimensions.d = 1000 # (d)
 # dimensions.num_func_K = 100
 dimensions.num_func_K = 300 # (p)
 
+conditions = []
+push!(conditions, [Condition() for _ in 1:dimensions.num_func_I])
+push!(conditions, [Condition() for _ in 1:dimensions.num_func_K])
+
 params.q_datacenters = 100
-
 dimensions.iters = 10
-
 params.max_task_delay = 40
-
 block_function = get_block_cyclic
+params.alpha_ = 0.5
+params.beta_ = 0.5
 
 params.compute_epoch_bool = false       # Necessary if record method is "1" - epoch numbers
 params.record_residual = false          # record_residual = 1 for storing ||x_{n+1} - x_n||^2
@@ -28,6 +31,3 @@ params.record_dist = false              # record_dist = 1 for storing ||x_* - x_
 # "2" is used to plot against the number of prox calls
 # "3" is used to plot against the wall clock time
 record_method = "0"  
-
-params.alpha_ = 0.5
-params.beta_ = 0.5
