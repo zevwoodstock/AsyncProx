@@ -25,7 +25,8 @@ params = parameters(Int64[],                      # I
                     false,                        # record_dist
                     0.5,                          # alpha_
                     0.5,                          # beta_
-                    0,                            # max_task_delay
+                    0,                            # max_iter_delay #default sync
+                    0,                            # max_task_delay #default sync
                     Vector{Any}[],                # mapping_ping
                     Vector{Float64}[],            # ping_array
                     0)                            # q_datacenters
