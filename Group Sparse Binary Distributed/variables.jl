@@ -54,6 +54,7 @@ mutable struct parameters
     record_dist::Bool     
     alpha_::Float64
     beta_::Float64   
+    max_iter_delay::Int64
     max_task_delay::Int64 
     mapping_ping::Vector{Int64}
     ping_array::Vector{Float64}  
