@@ -16,10 +16,10 @@ println("execution started")
 
 tick()
 include("loop.jl")
+tock()
 
 record()
 get_accuracy()
 println(check_feasibility())
 print_params()
 println()
-tock()
