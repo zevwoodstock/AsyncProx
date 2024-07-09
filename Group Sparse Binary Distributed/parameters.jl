@@ -10,7 +10,7 @@ if length(ARGS)>0
     dimensions.num_func_K = parse(Int, ARGS[4])
     params.q_datacenters = parse(Int, ARGS[5])
     dimensions.iters = parse(Int, ARGS[6])
-    params.max_task_delay = parse(Int, ARGS[7])
+    params.max_iter_delay = parse(Int, ARGS[7])
     params.alpha_ = parse(Float64, ARGS[8])
     params.beta_ = parse(Float64, ARGS[9])
     if ARGS[10]=="false"
@@ -34,7 +34,7 @@ if length(ARGS)>0
         params.record_dist = true
     end
     record_method = parse(Int, ARGS[14])
-
+    
 else
     L_function_bool = false  #Set this to be true if you want to input L as a Matrix of functions. Need to declare adjoint functions.
 
@@ -47,8 +47,8 @@ else
 
     params.q_datacenters = 100
     dimensions.iters = 10
-    params.max_task_delay = 0 #0 for sync, iter/2 for max async
-
+    params.max_iter_delay = 0
+    params.max_task_delay = 0
     params.alpha_ = 0.5
     params.beta_ = 0.5
 
@@ -63,6 +63,7 @@ else
     # 2 is used to plot against the number of prox calls
     # 3 is used to plot against the wall clock time
     record_method = 0 
+    
 end
 
 block_function = get_block_cyclic
