@@ -1,7 +1,7 @@
 # -- X -- X -- X -- X -- X -- X -- X -- X -- Some Precomputations -- X -- X -- X -- X -- X -- X -- X -- X 
 
 params.mapping_ping = rand(1:params.q_datacenters, dimensions.num_func_K)
-params.ping_array = rand(Float64, params.q_datacenters) .* 0.05
+params.ping_array = rand(Float64, params.q_datacenters) .* 0.5
 
 dimensions.dims_array_I = fill(dimensions.d, dimensions.num_func_I)
 dimensions.dims_array_K = fill(dimensions.d, dimensions.num_func_K)
