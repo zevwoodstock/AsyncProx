@@ -375,7 +375,7 @@ function check_task_delay(j)
     #Checking if a task has been delayed for too long
     if j>1
         for b in 1:vars.tasks_num[1]
-            if vars.birthdates[1][b]<j-params.max_task_delay
+            if vars.birthdates[1][b]<j-params.max_iter_delay
                 newvals=fetch(vars.running_tasks[1][b])
                 task_no = vars.task_number[1][b]
                 vars.a[task_no] , y= newvals 
@@ -383,7 +383,7 @@ function check_task_delay(j)
             end
         end
         for b in 1:vars.tasks_num[2]
-            if vars.birthdates[2][b]<j-params.max_task_delay
+            if vars.birthdates[2][b]<j-params.max_iter_delay
                 newvals=fetch(vars.running_tasks[2][b])
                 task_no = vars.task_number[2][b]
                 vars.b[task_no] , y= newvals 
@@ -394,11 +394,17 @@ function check_task_delay(j)
 
 end
 
+function yield_old_spawns(j, time, type)
+    if time > params.max_task_delay
+        compute(j, type)
+    end
+end
+
 function compute(j, ind)
     birth = 1
     while birth<= vars.tasks_num[ind]
             # println("Task delayed for too long")
-            if vars.birthdates[1][birth]<j-params.max_task_delay
+            if vars.birthdates[1][birth]<j-params.max_iter_delay
                 # println("Task done", j, birth, vars.tasks_num[ind])
                 task = vars.task_number[ind][birth]
                     if ind==2
@@ -430,29 +436,36 @@ end
 
 function custom_prox(ind, i, f, y, gamma)
     # notify(conditions[ind][i])
+    datacenter_index = rand(1:params.q_datacenters)
+    # print("Hi")
+    sleep_time = params.ping_array[datacenter_index]
+    n_error = randn()*0.005 #implies std_dev of normal error is 0.005 
+    sleep(abs(n_error) + sleep_time)
     a,b = prox(f,y,gamma)
     return a,b
 end
 
 function define_tasks(j)
     #schedule a new task in each iteration for each i in I, and append it to the running tasks vector
+    num_workers = nworkers()
     for i in params.I    
             # println("00")              # change  - incorporated blocks into this, now running over entire params.I 
             vars.l_star[i] = matrix_dot_product(get_L(L_operator_transpose, i), res.v_star[j]) 
-            local task = @spawnat :any custom_prox(1, i, functions[i], res.x[j][i] - vars.l_star[i]*vars.gamma_history[j][i], vars.gamma_history[j][i])
+            local task = @spawnat (i%num_workers +1) custom_prox(1, i, functions[i], res.x[j][i] - vars.l_star[i]*vars.gamma_history[j][i], vars.gamma_history[j][i])
             # println("1")
             vars.prox_call[i] = 1
             vars.prox_call_count += 1
             add_task(task, 1, j, i)
-            # println("i = ", i)
+            yield_old_spawns(j, i, 1)
     end
     println("here")
     for k in params.K 
             vars.l[k] = matrix_dot_product(get_L(L_operator, k), res.x[j])
-            local task = @spawnat :any custom_prox(2, k, functions[dimensions.num_func_I+k], vars.l[k] + vars.mu_history[j][k]*res.v_star[j][k], vars.mu_history[j][k])
+            local task = @spawnat (k%num_workers +1) custom_prox(2, k, functions[dimensions.num_func_I+k], vars.l[k] + vars.mu_history[j][k]*res.v_star[j][k], vars.mu_history[j][k])
             vars.prox_call[dimensions.num_func_I+k] = 1
             vars.prox_call_count += 1
             add_task(task, 2, j, k)
+            yield_old_spawns(j, k, 2)
     end
 end
 
@@ -755,7 +768,7 @@ function print_params()
     println("num_func_K = ", dimensions.num_func_K)
     println("q_datacenters = ", params.q_datacenters)
     println("iters = ", dimensions.iters)
-    println("max_task_delay = ", params.max_task_delay)
+    println("max_iter_delay = ", params.max_iter_delay)
     println("alpha = ", params.alpha_)
     println("beta = ", params.beta_)
     println("compute_epoch_bool = ", params.compute_epoch_bool)
