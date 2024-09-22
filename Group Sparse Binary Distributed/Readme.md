@@ -61,7 +61,11 @@ You can change the number of processors here by replacing 'auto' with the number
    ```bash
    sbatch <script-name>.sh
    ```
-2. The job will run on the specified partition with the allocated memory.
+   Optionally, you can use the bash file already provided in the library as
+   ```bash
+   sbatch run.sh
+   ```
+3. The job will run on the specified partition with the allocated memory.
 
 ### Command-Line Arguments
 
