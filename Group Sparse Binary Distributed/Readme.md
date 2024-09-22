@@ -1,6 +1,3 @@
-Here's a `README.md` file for the provided code:
-
-```markdown
 # Project Title
 
 This project is a Julia-based implementation designed to run on an HPC cluster using the SLURM workload manager. The code performs large-scale optimization or numerical computations distributed across multiple computing nodes. The main script (`main.jl`) executes a series of iterations to compute and record results based on user-defined or default parameters.
