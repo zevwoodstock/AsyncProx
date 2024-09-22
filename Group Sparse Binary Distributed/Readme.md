@@ -1,6 +1,6 @@
-# Project Title
+# Sparse Linear Classifier Training
 
-This project is a Julia-based implementation designed to run on an HPC cluster using the SLURM workload manager. The code performs large-scale optimization or numerical computations distributed across multiple computing nodes. The main script (`main.jl`) executes a series of iterations to compute and record results based on user-defined or default parameters.
+This problem focuses on the binary classification problem related to latent group lasso or lasso group overlap. The objective is to solve an optimization problem to find a sparse linear classifier by minimizing a specific objective function under given constraints. 
 
 ## Table of Contents
 - [Prerequisites](#prerequisites)
