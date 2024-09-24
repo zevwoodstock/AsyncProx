@@ -402,8 +402,11 @@ end
 
 function compute(j, ind)
     birth = 1
-    while birth<= vars.tasks_num[ind]
+    while birth<= vars.tasks_num[ind] && birth <= dimensions.num_func_I
             # println("Task delayed for too long")
+            # if birth > 1400
+            #     println(birth)
+            # end
             if vars.birthdates[1][birth]<j-params.max_iter_delay
                 # println("Task done", j, birth, vars.tasks_num[ind])
                 task = vars.task_number[ind][birth]
@@ -634,11 +637,15 @@ function record()
             end
             # print(vars.store_x[dimensions.iters])
             println("\ndist to minima is ", vars.dist_to_minima)
-            mn = Inf
-            for i in 1:dimensions.iters/2
-                mn = min(mn, vars.dist_to_minima[i])
+            mn1 = Inf
+            for i in 1:Int64(dimensions.iters/2)
+                mn1 = min(mn1, vars.dist_to_minima[i])
             end
-            println("||x_mn - xinf||^2 / ||x0-finf||^2 = ", SqrNormL2(1)(mn - vars.dist_to_minima[0]))
+            mn2 = mn1
+            for i in 1:Int64(dimensions.iters)
+                mn2 = min(mn2, vars.dist_to_minima[i])
+            end
+            println("||x_mn - xinf||^2 / ||x0-finf||^2 = ", SqrNormL2(1)(mn1/vars.dist_to_minima[1]))
         end
         if params.record_func == true
             for j in 1:dimensions.iters
@@ -665,10 +672,14 @@ function record()
             println("\nf_values is ", vars.f_values) #stores distance from final value 
             println("\nonly_f_values is ", vars.only_f_values) #stores actual function value
             mn = Inf
-            for i in 1:dimensions.iters/2
+            for i in 1:Int64(dimensions.iters/2)
                 mn = min(mn, vars.f_values[i])
             end
-            println("||f_mn - finf||^2 / ||f0-finf||^2 = ", SqrNormL2(1)(mn - vars.f_values[0]))
+            mn2 = Inf
+            for i in 1:Int64(dimensions.iters)
+                mn2 = min(mn2, vars.f_values[i])
+            end
+            println("||f_mn - finf||^2 / ||f0-finf||^2 = ", SqrNormL2(1)((mn - mn2)/(vars.only_f_values[1] - mn2)))
         end
     end
     if record_method == 1
