@@ -584,7 +584,7 @@ function get_accuracy()
 
     x_res = []
     for i in 1:dimensions.num_func_I
-        push!(x_res,res.x[dimensions.iters][i])
+        push!(x_res,res.x[div(dimensions.iters,2)][i])
     end
     println(size(x_res))
     y_pred::Vector{Float64} = fill(0.0, dimensions.d)
