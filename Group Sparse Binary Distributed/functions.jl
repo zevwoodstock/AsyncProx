@@ -632,7 +632,13 @@ function record()
             for j in 1:dimensions.iters
                 push!(vars.dist_to_minima, NormL2(1)(vars.store_x[j] - vars.store_x[dimensions.iters]))
             end
+            # print(vars.store_x[dimensions.iters])
             println("\ndist to minima is ", vars.dist_to_minima)
+            mn = Inf
+            for i in 1:dimensions.iters/2
+                mn = min(mn, vars.dist_to_minima[i])
+            end
+            println("||x_mn - xinf||^2 / ||x0-finf||^2 = ", SqrNormL2(1)(mn - vars.dist_to_minima[0]))
         end
         if params.record_func == true
             for j in 1:dimensions.iters
@@ -655,8 +661,14 @@ function record()
                 end
                 push!(vars.only_f_values, sum)
             end
-            println("\nf_values is ", vars.f_values)
-            println("\nonly_f_values is ", vars.only_f_values)
+            
+            println("\nf_values is ", vars.f_values) #stores distance from final value 
+            println("\nonly_f_values is ", vars.only_f_values) #stores actual function value
+            mn = Inf
+            for i in 1:dimensions.iters/2
+                mn = min(mn, vars.f_values[i])
+            end
+            println("||f_mn - finf||^2 / ||f0-finf||^2 = ", SqrNormL2(1)(mn - vars.f_values[0]))
         end
     end
     if record_method == 1
