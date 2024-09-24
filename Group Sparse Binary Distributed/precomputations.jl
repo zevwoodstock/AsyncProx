@@ -41,10 +41,10 @@ zeros_I = []
 zeros_K = []
 
 for i in 1:dimensions.num_func_I
-    append!(zeros_I, [zeros(dimensions.dims_array_I[i])])
+    append!(zeros_I, [rand(0.0:0.2, dimensions.dims_array_I[i])])
 end
 for i in 1:dimensions.num_func_K
-    append!(zeros_K, [zeros(dimensions.dims_array_K[i])])
+    append!(zeros_K, [rand(0.0:0.2, dimensions.dims_array_K[i])])
 end
 
 vars = variables(   zeros_I, 
