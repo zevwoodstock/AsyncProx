@@ -44,6 +44,15 @@ Ensure you have the following installed:
 - **`hyperparameters.jl`**: Defines the hyperparameters for the computation, including gamma and mu values.
 - **`variables.jl`, `functions.jl`, `init.jl`, `parameters.jl`, `precomputations.jl`**: Supporting scripts that define necessary functions, initialize variables, and handle precomputations.
 
+## Changes to the problem
+
+Change the parameters section to run in async mode accordingly by changing
+```
+   params.max_iter_delay = 5 # iters/2 for async, 0 for sync
+   params.max_task_delay = 10000 #inf or very large for async, 0 for sync
+```
+
+
 ## Running the Code
 
 To run the code, submit a SLURM job using the provided bash script:
