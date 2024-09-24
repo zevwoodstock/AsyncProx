@@ -46,16 +46,16 @@ else
     # dimensions.num_func_K = 300 # (p)
 
     params.q_datacenters = 100
-    dimensions.iters = 10
-    params.max_iter_delay = 0
-    params.max_task_delay = 0
+    dimensions.iters = 20
+    params.max_iter_delay = 5 # 10/2 for async
+    params.max_task_delay = 1000 #inf for async
     params.alpha_ = 0.5
     params.beta_ = 0.5
 
     params.compute_epoch_bool = false       # Necessary if record method is "1" - epoch numbers
     params.record_residual = false          # record_residual = 1 for storing ||x_{n+1} - x_n||^2
     params.record_func = true               # record_func = 1 for storing f(x_n)
-    params.record_dist = false              # record_dist = 1 for storing ||x_* - x_n||^2
+    params.record_dist = true              # record_dist = 1 for storing ||x_* - x_n||^2
 
     # the variable record_method indicates the type of variable you wish to use for the x_axis
     # 0 is used for plotting against the number of iterations
