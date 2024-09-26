@@ -26,6 +26,7 @@ Ensure you have the following installed:
 2. Navigate to the project directory:
    ```bash
    cd <project-directory>
+   cd Group/ Sparse/ Binary/ Distributed
    ```
 3. Install the required Julia packages:
    ```julia
@@ -70,11 +71,13 @@ You can change the number of processors here by replacing 'auto' with the number
    ```bash
    sbatch <script-name>.sh
    ```
-   Optionally, you can use the bash file already provided in the library as
+   The job will run on the specified partition with the allocated memory.
+   Optionally, you can use the bash file already provided in the library (run.sh).
+2. You can also simply run the julia file from the command line as
    ```bash
-   sbatch run.sh
+   julia -p n main.jl
    ```
-3. The job will run on the specified partition with the allocated memory.
+where n is the number of processors.
 
 ### Command-Line Arguments
 
