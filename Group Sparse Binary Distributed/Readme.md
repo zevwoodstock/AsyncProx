@@ -47,12 +47,16 @@ Ensure you have the following installed:
 
 ## Changes to the problem
 
-Change the parameters section to run in async mode accordingly by changing
+Change the parameters section to run in async mode accordingly by changing the following inside parameters.jl - 
 ```
    params.max_iter_delay = 5 # iters/2 for async, 0 for sync
    params.max_task_delay = 10000 #inf or very large for async, 0 for sync
 ```
-
+Further, if you want to replicate Experiment-1, where we run for twice the number of iterations that we want, set params.running_experiment to true and iters to 20 -
+```
+   params.running_experiment = true
+   dimensions.iters = 20
+```
 
 ## Running the Code
 
