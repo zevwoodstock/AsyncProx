@@ -9,7 +9,7 @@ This problem focuses on the binary classification problem related to latent grou
 - [Running the Code](#running-the-code)
 - [Parameters](#parameters)
 - [Output](#output)
-- [How to run a different problem using this library] (#more)
+- [How to run a different problem using this repository](#more)
 
 ## Prerequisites
 
