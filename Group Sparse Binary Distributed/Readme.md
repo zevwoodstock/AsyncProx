@@ -9,6 +9,7 @@ This problem focuses on the binary classification problem related to latent grou
 - [Running the Code](#running-the-code)
 - [Parameters](#parameters)
 - [Output](#output)
+- [How to run a different problem using this library] (#more)
 
 ## Prerequisites
 
@@ -125,6 +126,7 @@ The code will output results depending on the `record_method` and flags provided
 
 The outputs will be saved or printed based on the configurations in the code.
 
+## More
 # Using the library to run a different problem
 
 1. Define your functions f_i and g_k according to the Combettes-Eckstein Algorithm formulation.
