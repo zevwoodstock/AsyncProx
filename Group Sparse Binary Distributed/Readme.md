@@ -2,6 +2,8 @@
 
 This problem focuses on the binary classification problem related to latent group lasso or lasso group overlap. The objective is to solve an optimization problem to find a sparse linear classifier by minimizing a specific objective function under given constraints. 
 
+You can also use this folder to run a different optimisation problem from Sparse Linear Classifier, i.e. change the optimisation function.
+
 ## Table of Contents
 - [Prerequisites](#prerequisites)
 - [Getting Started](#getting-started)
