@@ -125,3 +125,11 @@ The code will output results depending on the `record_method` and flags provided
 
 The outputs will be saved or printed based on the configurations in the code.
 
+# Using the library to run a different problem
+
+1. Define your functions f_i and g_k according to the Combettes-Eckstein Algorithm formulation.
+2. Inside `parameters.jl', Define num_func_I = |I|, num_func_K = |K|. These represent the number of functions of type f and g respectively
+3. Inside `precomputations.jl' , append the functions f_i and then g_k to the array functions[].
+4. Define the proximal operators for any required functions, as done for `HingeDot' here.
+5. Follow the steps mentioned in [Running the Code](#running-the-code) 
+
