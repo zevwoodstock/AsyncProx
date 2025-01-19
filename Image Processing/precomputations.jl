@@ -1,8 +1,11 @@
 dimensions.num_func_I = params.num_images
 dimensions.num_func_K = 2*params.num_images - 1
 
-dimensions.dims_array_I = fill(dimensions.d, dimensions.num_func_I)
-dimensions.dims_array_K = fill(dimensions.d, dimensions.num_func_K)
+row, column = get_row_column(params.img_path_array[1])
+N = row * column
+
+dimensions.dims_array_I = fill(N, dimensions.num_func_I)
+dimensions.dims_array_K = fill(N, dimensions.num_func_K)
 L_matrix = fill(fill(1.0, dimensions.num_func_I), dimensions.num_func_K)
 
 L_function = generate_L(params.num_images, blur)
@@ -22,7 +25,6 @@ end
 
 params.constant_g = []   # this is defined if for generate_gamma the strategy taken is generate_gamma_constant
 params.constant_m = []   # this is defined if for generate_mu the strategy taken is generate_mu_constant
-calculate_mu_beta()
 
 img_arr = []
 for i in 1:params.num_images
@@ -63,22 +65,10 @@ for i in 1:dimensions.num_func_I
     z[i] = blur(z[i])
 end
 
-if params.randomize_initial == true
-    for i in 1:dimensions.num_func_I
-        res.x[1][i] = w[i]
-    end
-end
-
-if params.initialize_with_zi == true
-    for i in 1:dimensions.num_func_I
-        res.x[1][i] = z[i]
-    end
-end
-
 # saving the degraded images here
 for i in 1:dimensions.num_func_I
     deg_image_i = matrix_to_image(vectorToImage(num_rows, num_cols, z[i]))
-    save("/Users/kashishgoel/Desktop/Intern_2023/Multiple_Image_processing/deg_$i.jpeg",deg_image_i)
+    save("./deg_$i.jpeg",deg_image_i)
 end
 
 functions = []
@@ -135,6 +125,18 @@ vars = variables(zeros_I,
 
 res = result([zeros_I],
             [zeros_K])
+
+if params.randomize_initial == true
+    for i in 1:dimensions.num_func_I
+        res.x[1][i] = w[i]
+    end
+end
+
+if params.initialize_with_zi == true
+    for i in 1:dimensions.num_func_I
+        res.x[1][i] = z[i]
+    end
+end
 
 for i in 1:dimensions.num_func_I+dimensions.num_func_K
     push!(vars.prox_call,0)

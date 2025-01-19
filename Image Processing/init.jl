@@ -17,8 +17,6 @@ params = parameters(Int64[],                      # I
                     0.0,                          # constant_mu
                     Float64[],                    # constant_g
                     Float64[],                    # constant_m
-                    Vector{Vector{Float64}}[],    # mu_k
-                    Float64[],                    # beta_k
                     false,                        # compute_epoch_bool
                     false,                        # record_residual
                     false,                        # record_func

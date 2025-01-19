@@ -85,18 +85,11 @@ if length(ARGS)>0
     params.sigma_blur = parse(Float64, ARGS[16 + 3*dimensions.num_images])
     
 else
-    L_function_bool = false  #Set this to be true if you want to input L as a Matrix of functions. Need to declare adjoint functions.
+    L_function_bool = true  #Set this to be true if you want to input L as a Matrix of functions. Need to declare adjoint functions.
 
-    dimensions.num_func_I = 1429 # The number of intervals (number of Gi)
-    # dimensions.num_func_I = 100 # (m)
-    dimensions.d = 10000
-    # dimensions.d = 1000 # (d)
-    dimensions.num_func_K = 100
-    # dimensions.num_func_K = 300 # (p)
-
-    dimensions.iters = 20
-    params.max_iter_delay = 5 # 10/2 for async
-    params.max_task_delay = 1000 #inf for async
+    dimensions.iters = 300
+    params.max_iter_delay = 150 # 10/2 for async
+    # params.max_task_delay = 1000 #inf for async
     params.alpha_ = 0.5
     params.beta_ = 0.5
     params.sigma_blur = 500.0
@@ -104,13 +97,13 @@ else
     params.compute_epoch_bool = false       # Necessary if record method is "1" - epoch numbers
     params.record_residual = false          # record_residual = 1 for storing ||x_{n+1} - x_n||^2
     params.record_func = true               # record_func = 1 for storing f(x_n)
-    params.record_dist = true              # record_dist = 1 for storing ||x_* - x_n||^2
+    params.record_dist = false              # record_dist = 1 for storing ||x_* - x_n||^2
 
     params.randomize_initial = false
-    params.initialize_with_zi = false
+    params.initialize_with_zi = true
     params.block_function = get_block_cyclic
-    params.generate_gamma_function = generate_gamma_seq
-    params.generate_mu_function = generate_mu_seq
+    params.generate_gamma_function = generate_gamma_constant
+    params.generate_mu_function = generate_mu_constant
 
     # the variable record_method indicates the type of variable you wish to use for the x_axis
     # 0 is used for plotting against the number of iterations
@@ -119,10 +112,12 @@ else
     # 3 is used to plot against the wall clock time
     params.record_method = 0
     params.num_images = 4
-    params.img_path_array = ["orig_1.jpeg",
-                        "orig_2.jpeg",
-                        "orig_3.jpeg",
-                        "orig_4.jpeg"]
+    params.img_path_array = ["Image Processing/orig_1.jpeg",
+                        "Image Processing/orig_2.jpeg",
+                        "Image Processing/orig_3.jpeg",
+                        "Image Processing/orig_4.jpeg"]
+    dimensions.num_func_I = params.num_images
+    dimensions.num_func_K = 2*params.num_images - 1
     params.left_shift_pixels = [8,5,12]
     params.right_shift_pixels = [8,5,12]
     

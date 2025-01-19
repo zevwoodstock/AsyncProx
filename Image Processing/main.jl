@@ -1,4 +1,4 @@
-
+using Distributed
 @everywhere using LinearAlgebra
 @everywhere using ProximalOperators
 @everywhere using Random
@@ -21,7 +21,6 @@ tock()
 
 save_images()
 record()
-get_accuracy()
 println(check_feasibility())
 print_params()
 println()

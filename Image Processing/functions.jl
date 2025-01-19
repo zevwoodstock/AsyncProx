@@ -1,11 +1,3 @@
-# shift these to params.jl
-# global start_value_gamma = 100
-# global end_value_gamma = 10
-# global rate_decrease_gamma = 5
-# global start_value_mu = 0.1
-# global end_value_mu = 0.01
-# global rate_decrease_mu = 0.0001
-
 function imageToVector(image::Array{T, 2}) where {T}
     rows, columns = size(image)
     vector = vec(image)
@@ -159,57 +151,6 @@ function blur(img::Matrix{Float64})
     # img_blurred = imfilter(img, Kernel.gaussian((3, 3), 0.5))
     # img_blurred = imfilter(img, Kernel.gaussian(3, 3, 0.5))
     return imageToVector(img_blurred);  
-end
-
-function generate_G_x(m, d)
-    g = [Int[] for _ in 1:m]
-    x = [Float64[0.0 for _ in 1:d] for _ in 1:m]
-    start = 1
-    for i in 1:m
-        if i == 1
-            start = 1
-        else
-            start += 7
-        end
-        
-        temp = Int[]
-        for j in 1:10
-            if start + j - 1 > d
-                break
-            end
-            push!(temp, start + j - 1)
-            x[i][start + j - 1] = randn()*1000
-        end
-        g[i]= temp
-    end
-    return g, x
-end
-
-function calculate_mu_beta()
-    G, original_x = generate_G_x(dimensions.num_func_I, dimensions.d)
-    original_y = sum(original_x, dims=1)[1]
-    d_one = fill(1.0, dimensions.d)
-    
-    for _ in 1:dimensions.num_func_K
-        random_vector = randn(Float64, dimensions.d)
-        rnorm = NormL2(1)(random_vector)
-        random_vector = random_vector/rnorm
-        push!(params.mu_k, random_vector)
-    end
-    w_temp = []
-    for i in 1:dimensions.num_func_K
-        if i%4==0
-            push!(w_temp, -1)
-        else
-            push!(w_temp, 1)
-        end
-    end
-    w = shuffle(w_temp)
-
-    for i in 1:dimensions.num_func_K
-        push!(params.beta_k, w[i]*sign(dot(params.mu_k[i], original_y)))
-    end
-
 end
 
 function get_block_cyclic(n::Int64, m::Int64 = 20, M::Int64 = 5) 
@@ -516,33 +457,22 @@ end
 function check_task_delay(j)
     #Checking if a task has been delayed for too long
     if j>1
-        println("hi 1")
         for b in 1:vars.tasks_num[1]
-            println("hi 2")
             if vars.birthdates[1][b]<j-params.max_iter_delay
-                println("hi 3")
+                task_done = istaskdone(vars.running_tasks[1][b])
+                println("Task done: ", task_done)
                 newvals=fetch(vars.running_tasks[1][b])
-                println("hi 4")
                 task_no = vars.task_number[1][b]
-                println("hi 5")
                 vars.a[task_no] , y= newvals 
-                println("hi 6")
                 vars.a_star[task_no] = (res.x[j][task_no]-vars.a[task_no])./vars.gamma_history[j][task_no] - vars.l_star[task_no]
-                println("hi 7")
             end
         end
         for b in 1:vars.tasks_num[2]
-            println("hi 8")
             if vars.birthdates[2][b]<j-params.max_iter_delay
-                println("hi 9")
                 newvals=fetch(vars.running_tasks[2][b])
-                println("hi10")
                 task_no = vars.task_number[2][b]
-                println("hi11")
                 vars.b[task_no] , y= newvals 
-                println("hi12")
                 vars.b_star[task_no] = res.v_star[j][task_no] + (vars.l[task_no]-vars.b[task_no])./vars.mu_history[j][task_no]
-                println("hi13")
             end
         end
     end
@@ -550,13 +480,8 @@ end
 
 function compute(j, ind)
     birth = 1
-    while birth<= vars.tasks_num[ind] && birth <= dimensions.num_func_I
-            # println("Task delayed for too long")
-            # if birth > 1400
-            #     println(birth)
-            # end
-            if vars.birthdates[1][birth]<j-params.max_iter_delay
-                # println("Task done", j, birth, vars.tasks_num[ind])
+    while birth<= vars.tasks_num[ind]
+        if istaskdone(vars.running_tasks[ind][birth]) == true
             task = vars.task_number[ind][birth]
                 if ind==2
                     vars.b[task],y = fetch(vars.running_tasks[ind][birth])
@@ -568,14 +493,13 @@ function compute(j, ind)
                 delete_task(ind, birth)
         
             if ind==2
-                    vars.t[task] = vars.b[task] - matrix_dot_product(get_L(L_operator, task), vars.a)
+                vars.t[task] = vars.b[task] - matrix_dot_product(get_L(L_operator, task), vars.a)
                 vars.sum_k[task] = (norm_function(vars.t[task]))*2               
             else
-                    vars.t_star[task] = vars.a_star[task] +  matrix_dot_product(get_L(L_operator_transpose, task), vars.b_star)
+                vars.t_star[task] = vars.a_star[task] +  matrix_dot_product(get_L(L_operator_transpose, task), vars.b_star)
                 vars.sum_i[task] = (norm_function(vars.t_star[task]))*2
             end
         else
-                # println("else part", j, birth, vars.tasks_num[ind])
             birth = birth+1
         end
     end
@@ -595,17 +519,20 @@ function phi(x)
     for i in 1:n
         y[i] = abs(y[i])
     end
-    mu_array = constant_vector(N,0.1)
+    row, column = get_row_column(params.img_path_array[1])
+    N = row * column
+    mu_array = constant_vector(N, 0.1)
     linear_op = Linear(mu_array)
     result = linear_op(y)
     return result
 end
 
 function generate_random_vector(N, sigma = 0.01)
+    row, column = get_row_column(params.img_path_array[1])
+    N = row * column
     rng = MersenneTwister(1234)  # Set a random number generator seed for reproducibility
     mu = 0.0  # Mean of the normal distribution (default: 0.0)
-    sigma_squared = sigma^2  # Variance of the normal distribution
-    
+    sigma_squared = params.sigma^2  # Variance of the normal distribution
     random_vector = sqrt(sigma_squared) * randn(rng, N) .+ mu
     return random_vector
 end
@@ -723,6 +650,8 @@ end
 
 function custom_prox(t, f, y, gamma)
     sleep(t)
+    row, column = get_row_column(params.img_path_array[1])
+    N = row * column
     mu_array = constant_vector(N,0.1)
     if f == phi
         dwt = Wavelets.dwt(y, wavelet(WT.sym4))
@@ -751,12 +680,12 @@ function define_tasks(j)
     end
 
     for k in params.K
-            vars.l[k] = matrix_dot_product(get_L(L_operator, k), res.x[j])
-            delay = 0
-            local task = @task custom_prox(delay, functions[dimensions.num_func_I+k], vars.l[k] + vars.mu_history[j][k]*res.v_star[j][k], vars.mu_history[j][k])
-            vars.prox_call[dimensions.num_func_I+k] = 1
-            vars.prox_call_count += 1
-            add_task(task, 2, j, k)
+        vars.l[k] = matrix_dot_product(get_L(L_operator, k), res.x[j])
+        delay = 0
+        local task = @task custom_prox(delay, functions[dimensions.num_func_I+k], vars.l[k] + vars.mu_history[j][k]*res.v_star[j][k], vars.mu_history[j][k])
+        vars.prox_call[dimensions.num_func_I+k] = 1
+        vars.prox_call_count += 1
+        add_task(task, 2, j, k)
     end
 end
 
@@ -828,6 +757,7 @@ function delete_task(ind, birth)
 end
 
 function add_task(task, ind, j, i)
+    schedule(task)
     push!(vars.running_tasks[ind], task)
     push!(vars.birthdates[ind], j)
     push!(vars.task_number[ind], i)
@@ -879,7 +809,7 @@ function save_images()
     row, column = get_row_column(params.img_path_array[1])
     x_res = []
     for i in 1:dimensions.num_func_I
-        push!(x_res,res.x[iters][i])
+        push!(x_res,res.x[dimensions.iters][i])
     end
 
     ret_images = []
@@ -890,13 +820,13 @@ function save_images()
     ret_path = []
     for i in 1:dimensions.num_func_I
         println("saving the recovered images")
-        push!(ret_path,"ret_$i.jpeg")
+        push!(ret_path,"Image Processing/ret_$i.jpeg")
         save(ret_path[i],ret_images[i])
     end
 end
 
 function record()
-    if record_method == 0
+    if params.record_method == 0
         if params.record_residual == true
             for j in 2:dimensions.iters
                 temp = []
@@ -962,7 +892,7 @@ function record()
             println("||f_mn - finf||^2 / ||f0-finf||^2 = ", SqrNormL2(1)((mn - mn2)/(vars.only_f_values[1] - mn2)))
         end
     end
-    if record_method == 1
+    if params.record_method == 1
         if params.record_residual == true
             for j in vars.epoch_array
                 if j != 1
@@ -1010,7 +940,7 @@ function record()
             println("\nonly_f_values is ", vars.only_f_values)
         end
     end
-    if record_method == 2
+    if params.record_method == 2
         if params.record_residual == true
             for j in 1:dimensions.iters
                 temp = []
@@ -1069,7 +999,6 @@ function print_params()
     println("num_func_I = ", dimensions.num_func_I)
     println("d = ", dimensions.d)
     println("num_func_K = ", dimensions.num_func_K)
-    println("q_datacenters = ", params.q_datacenters)
     println("iters = ", dimensions.iters)
     println("max_iter_delay = ", params.max_iter_delay)
     println("alpha = ", params.alpha_)
@@ -1078,5 +1007,5 @@ function print_params()
     println("record_residual = ", params.record_residual)
     println("record_func = ", params.record_func)
     println("record_dist = ", params.record_dist)
-    println("record_method = ", record_method)
+    println("record_method = ", params.record_method)
 end

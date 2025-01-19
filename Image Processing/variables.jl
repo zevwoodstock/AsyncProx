@@ -46,8 +46,6 @@ mutable struct parameters
     constant_mu::Float64
     constant_g::Vector{Float64}
     constant_m::Vector{Float64}
-    mu_k::Vector{Vector{Float64}}
-    beta_k::Vector{Float64}
     compute_epoch_bool::Bool
     record_residual::Bool       
     record_func::Bool           
