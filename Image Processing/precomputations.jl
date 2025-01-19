@@ -68,7 +68,8 @@ end
 # saving the degraded images here
 for i in 1:dimensions.num_func_I
     deg_image_i = matrix_to_image(vectorToImage(num_rows, num_cols, z[i]))
-    save("./deg_$i.jpeg",deg_image_i)
+    base_path = dirname(params.img_path_array[i])
+    save(joinpath(base_path, "deg_$i.jpeg"),deg_image_i)
 end
 
 functions = []
