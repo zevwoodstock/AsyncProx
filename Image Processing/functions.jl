@@ -820,7 +820,8 @@ function save_images()
     ret_path = []
     for i in 1:dimensions.num_func_I
         println("saving the recovered images")
-        push!(ret_path,"Image Processing/ret_$i.jpeg")
+        base_path = dirname(params.img_path_array[i])
+        push!(ret_path, joinpath(base_path, "ret_$i.jpeg"))
         save(ret_path[i],ret_images[i])
     end
 end
