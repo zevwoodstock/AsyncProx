@@ -875,6 +875,26 @@ function compute_epoch()
         return true
 end
 
+function save_images()
+    row, column = get_row_column(params.img_path_array[1])
+    x_res = []
+    for i in 1:dimensions.num_func_I
+        push!(x_res,res.x[iters][i])
+    end
+
+    ret_images = []
+    for i in 1:dimensions.num_func_I
+        push!(ret_images,matrix_to_image(vectorToImage(row, column, x_res[i])))
+    end
+
+    ret_path = []
+    for i in 1:dimensions.num_func_I
+        println("saving the recovered images")
+        push!(ret_path,"ret_$i.jpeg")
+        save(ret_path[i],ret_images[i])
+    end
+end
+
 function record()
     if record_method == 0
         if params.record_residual == true
