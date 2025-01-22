@@ -37,7 +37,8 @@ N = num_rows * num_cols
 for i in 1:dimensions.num_func_I
     orig_image_i = matrix_to_image(vectorToImage(num_rows, num_cols, img_arr[i]))
     println("saving the original images here")
-    save("/Users/kashishgoel/Desktop/Intern_2023/Multiple_Image_processing/orig_$i.jpeg",orig_image_i)
+    base_path = dirname(params.img_path_array[i])
+    save(joinpath(base_path, "orig_$i.jpeg"),orig_image_i)
 end
 
 z = []
