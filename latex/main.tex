@@ -1,0 +1,725 @@
+\documentclass[preprint,12pt]{elsarticle}
+\usepackage{graphicx} % Required for inserting images
+\usepackage{amsmath,mathtools}
+\usepackage{hyperref}
+\usepackage{natbib}
+\usepackage{amssymb}
+\usepackage{algorithm,algorithmic}
+\usepackage{varwidth}
+\usepackage{eqparbox}
+\renewcommand\algorithmiccomment[1]{%
+  \hfill\#\ \eqparbox{COMMENT}{#1}%
+}
+
+%\newcommand\LONGCOMMENT[1]{%
+%  \hfill\#\ \begin{minipage}[t]{\eqboxwidth{COMMENT}}#1\strut\end{minipage}%
+%}
+\usepackage{pgfplots}
+
+
+\title{A note on asynchronous Projective Splitting in Julia}
+%We need to indicate that our submission is a "research note", not a full "research paper". This also stipulates that our draft needs to be less than 15 pages.
+%\author{Author list (TBD at end) }
+\date{July 2025}
+
+\definecolor{orng}{HTML}{D35400}
+\newcommand{\comment}[1]{{\color{orng} #1}}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage{amsmath,color}
+\usepackage{amssymb}
+\setlength\parindent{15pt} % for paragraph alignment
+\usepackage{wasysym}
+\usepackage{amssymb}
+\usepackage{epstopdf}
+\usepackage{float}
+\usepackage{mathrsfs}
+%\usepackage{subfig}
+\usetikzlibrary{arrows}
+\definecolor{xdxdff}{rgb}{0.6588235294117647,
+0.6588235294117647,0.6588}
+\definecolor{qqqqff}{rgb}{0.3333333333333333,
+0.3333333333333333,0.3333}
+\DeclareCaptionFormat{cont}{#1 (cont.)#2#3\par}
+
+%\usepackage[usenames,dvipsnames]{xcolor}
+%\date{}
+%\newtheorem{theorem}{Theorem}[section]
+%\newtheorem{corollary}[theorem]{Corollary}
+%\newtheorem{proposition}[theorem]{Proposition}
+%\newtheorem{lemma}[theorem]{Lemma}
+%\newtheorem{example}[theorem]{Example}
+%\newtheorem{notation}[theorem]{Notation}
+%\newtheorem{definition}[theorem]{Definition}
+%\newtheorem{condition}[theorem]{Condition}
+%\newtheorem{algorithm}[theorem]{Algorithm}
+% \newtheorem{remark}[theorem]{Remark}
+%\newtheorem{problem}[theorem]{Problem}
+%\newtheorem{conjecture}[theorem]{Conjecture}
+%\newtheorem{question}[theorem]{Question}
+\newcommand{\vertiii}[1]{{\left\vert\kern-0.25ex\left\vert
+\kern-0.25ex\left\vert #1 
+\right\vert\kern-0.25ex\right\vert\kern-0.25ex
+\right\vert}}
+\newtheorem{theorem}{Theorem}[section]
+\newtheorem{lemma}[theorem]{Lemma}
+\newtheorem{corollary}[theorem]{Corollary}
+\newtheorem{question}[theorem]{Question}
+\newtheorem{proposition}[theorem]{Proposition}
+\newtheorem{assumption}[theorem]{Assumption}
+\newtheorem{conjecture}[theorem]{Conjecture}
+\newtheorem{example}[theorem]{Example}
+\newtheorem{remark}[theorem]{Remark}
+%%%\newtheorem{algorithm}[theorem]{Algorithm}
+%\newtheorem{algorithm}{Algorithm}
+%\renewcommand*{\thealgorithm}{\alph{algorithm}} %changes counter for the algorithm environment
+\newtheorem{condition}[theorem]{Condition}
+\newtheorem{definition}[theorem]{Definition}
+\newtheorem{fact}[theorem]{Fact}
+\newtheorem{problem}[theorem]{Problem}
+\newtheorem{notation}[theorem]{Notation}
+\newtheorem{project}[theorem]{Project}
+\def\proof{{\it Proof}. \ignorespaces}
+\def\endproof{\vbox{\hrule height0.6pt\hbox{\vrule height1.3ex% 
+width0.6pt\hskip0.8ex\vrule width0.6pt}\hrule
+height0.6pt}}
+\renewcommand\theenumi{(\roman{enumi})}
+\renewcommand\theenumii{(\alph{enumii})}
+\renewcommand{\labelenumi}{\rm (\roman{enumi})}
+\renewcommand{\labelenumii}{\rm (\alph{enumii})}
+\newcommand{\cone}{\ensuremath{\text{\rm cone}\,}}
+\newcommand{\spts}{\ensuremath{\text{\rm{spts}\,}}}
+\newcommand{\Fix}{\ensuremath{\text{\rm Fix}\,}}
+\newcommand{\sign}{\ensuremath{\text{\rm sign}\,}}
+\newcommand{\spa}{\ensuremath{\text{span}\,}}
+\newcommand{\soft}[1]{\ensuremath{{\operatorname{soft}}_{{#1}}\,}}
+\newcommand{\hard}[1]{\ensuremath{{\operatorname{hard}}_{{#1}}\,}}
+\newcommand{\Argmin}{\ensuremath{{\text{\rm Argmin}}}}
+\newcommand{\Scal}[2]{\bigg\langle{#1}\;\bigg|\:{#2}\bigg\rangle}
+\newcommand{\scal}[2]{{\langle{{#1}\mid{#2}}\rangle}}
+\newcommand{\sscal}[2]{{\big\langle{{#1}\mid{#2}}\big\rangle}}
+\newcommand{\abscal}[2]{\left|\left\langle{{#1}\mid{#2}}}%
+\newcommand{\emp}{\ensuremath{{\varnothing}}}
+\newcommand{\minimize}[2]{\ensuremath{\underset{\substack{{#1}}}%
+{\text{minimize}}\;\;#2 }}
+%\numberwithin{equation}{section}
+\setlength{\itemsep}{1pt} 
+
+
+%--------------------------------------------------------------------
+%Command \theoremstyle already defined. }
+%Package natbib Error: Bibliography not compatible with author-year 
+%citations. ...and\NAT@force@numbers{}\NAT@force@numbers
+\usepackage{natbib}
+\DeclareMathOperator*{\argmax}{arg\,max}
+\DeclareMathOperator*{\argmin}{arg\,min}
+\setlength{\bibsep}{3.5pt}
+\def\HH{\mathcal H}
+\def\BHG{\mathcal {B}(\mathcal{H},\mathcal{G})}
+\def\card{\textnormal{card}}
+\def\GG{\mathcal G}
+\def\KK{\mathcal K}
+\def\G0{\Gamma_0(\mathcal G)}
+\def\H0{\Gamma_0(\mathcal H)}
+\newcommand{\NN}{\ensuremath{\mathbb N}}
+\newcommand{\RR}{\ensuremath{\mathbb{R}}}
+\newcommand{\iin}{\ensuremath{\textrm{i}(n)}}
+\newcommand{\ii}{\ensuremath{\textrm{i}}}
+\newcommand{\RP}{\ensuremath{\left[0,+\infty\right[}}
+\newcommand{\RT}{\ensuremath{\left[-\infty,+\infty\right]}} %Defined for Range = R
+\newcommand{\RM}{\ensuremath{\left]-\infty,0\right]}}
+\newcommand{\RMM}{\ensuremath{\left]-\infty,0\right[}}
+\newcommand{\BL}{\ensuremath{\EuScript B}\,}
+\newcommand{\RPP}{\ensuremath{\left]0,+\infty\right[}}
+\newcommand{\RPPX}{\ensuremath{\left]0,+\infty\right]}}
+\newcommand{\ran}{\ensuremath{\text{\rm ran}\,}}
+%\newcommand{\span}{\ensuremath{\text{\rm span}\,}}
+\def\sri{\textnormal{sri}}
+\newcommand{\reli}{\ensuremath{\text{\rm ri}\,}}
+\newcommand{\pushfwd}{\ensuremath{\mbox{\Large$\,\triangleright\,$}
+}}
+%\def\Id{\text{Id}}
+\newcommand{\menge}[2]{\big\{{#1}~\big |~{#2}\big\}}
+\newcommand{\Menge}[2]{\left\{{#1}~\left|~{#2}\right.\right\}}
+
+\newcommand*{\Id}{\text{\normalfont Id}}
+\usepackage{lipsum}
+\setcitestyle{square,citesep={,}}
+\newcommand\scalemath[2]{\scalebox{#1}{\mbox{\ensuremath
+{\displaystyle #2}}}}
+\newcommand{\dom}{\ensuremath{\text{\rm dom}\,}}
+\newcommand{\ri}{\ensuremath{\text{\rm ri}\,}}
+\newcommand{\bdry}{\ensuremath{\text{\rm bdry}\,}}
+\newcommand{\Int}{\ensuremath{\text{\rm int}\,}}
+\newcommand{\supp}{\ensuremath{\text{\rm supp}\,}}
+\newcommand{\gra}{\ensuremath{\text{\rm gra}\,}}
+\newcommand{\prox}{\ensuremath{\text{\rm Prox}\,}}
+\newcommand{\zer}{\ensuremath{\text{\rm zer}\,}}
+\newcommand{\rec}{\ensuremath{\text{\rm rec}\,}}
+\newcommand{\core}{\ensuremath{\text{\rm core}}}
+\newcommand{\range}{\ensuremath{\text{\rm range}\,}}
+
+
+
+\journal{SIAM Undergraduate Research Online (SIURO)}
+\pgfplotsset{compat=1.18} 
+\begin{document}
+
+\begin{frontmatter}
+
+%% Title, authors and addresses
+
+%% use the tnoteref command within \title for footnotes;
+%% use the tnotetext command for theassociated footnote;
+%% use the fnref command within \author or \address for footnotes;
+%% use the fntext command for theassociated footnote;
+%% use the corref command within \author for corresponding author footnotes;
+%% use the cortext command for theassociated footnote;
+%% use the ead command for the email address,
+%% and the form \ead[url] for the home page:
+%% \title{Title\tnoteref{label1}}
+%% \tnotetext[label1]{}
+%% \author{Name\corref{cor1}\fnref{label2}}
+%% \ead{email address}
+%% \ead[url]{home page}
+%% \fntext[label2]{}
+%% \cortext[cor1]{}
+%% \affiliation{organization={},
+%%             addressline={},
+%%             city={},
+%%             postcode={},
+%%             state={},
+%%             country={}}
+%% \fntext[label3]{}
+
+\title{}
+
+%% use optional labels to link authors explicitly to addresses:
+%% \author[label1,label2]{}
+%% \affiliation[label1]{organization={},
+%%             addressline={},
+%%             city={},
+%%             postcode={},
+%%             state={},
+%%             country={}}
+%%
+%% \affiliation[label2]{organization={},
+%%             addressline={},
+%%             city={},
+%%             postcode={},
+%%             state={},
+%%             country={}}
+
+%Any research papers published with you as a co-author from your internship work should list your affiliation as "Department of Computer Science and Engineering, I.I.T. Delhi, Hauz Khas, New Delhi - 110016, INDIA".
+
+\author[]{Utkarsh Sharma\textsuperscript{1}}
+\author[]{Kashish Goel\textsuperscript{1}}
+\author[]{Aryan Dua\textsuperscript{1}}
+\author[]{\\Project advisors: Zev Woodstock\textsuperscript{2,3}, Sebastian Pokutta\textsuperscript{2}}
+
+
+
+            
+\begin{abstract}
+%% Text of abstract
+While it has been mathematically proven that Projective Splitting (PS) algorithms can converge in parallel and distributed computing settings, to-date, it appears there were no open-source implementations of the full algorithm with asynchronous computing capabilities. 
+% (one asynchronous implementation exists specifically for Progressive Hedging problems).  
+This note fills this gap by providing a Julia implementation of the asynchronous PS algorithm of Eckstein and Combettes for solving fully nonsmooth convex optimization problems. Our methodology includes inter-operability with existing packages within the Julia ecosystem, and we also document observations from running this algorithm asynchronously on problems in image processing and machine learning. 
+\end{abstract}
+
+
+% \include{highlights}
+
+\begin{keyword}
+%% keywords here, in the form: keyword \sep keyword
+nonsmooth \sep convex \sep optimization \sep asynchrony \sep parallel computing
+%% PACS codes here, in the form: \PACS code \sep code
+
+%% MSC codes here, in the form: \MSC code \sep code
+%% or \MSC[2008] code \sep code (2000 is the default)
+
+\end{keyword}
+
+\end{frontmatter}
+
+\footnotetext[1]{Department of Computer Science and Engineering, I.I.T.~Delhi, Hauz Khas, New Delhi 110016, India.}
+\footnotetext[2]{Department of AI in Society, Science, and Technology, Zuse Institute Berlin, Takustr. 7, 12045 Berlin, Germany.}
+\footnotetext[3]{Department of Mathematics and Statistics, James Madison University, MSC 1911, 60 Bluestone Dr., Harrisonburg, Virginia 22807, USA.}
+
+
+%% \linenumbers
+
+%% main text
+\section{Introduction}
+\label{sec:intro}
+
+The rapid advancement of data-driven applications have intensified the need for efficient algorithms capable of addressing first-order nonsmooth optimization problems, e.g., those appearing in machine learning, signal processing, and operations research \cite{Bach12,Cham16,Comb11,Hint06}. 
+Despite the critical importance of first-order nonsmooth optimization, the landscape of available algorithms remains somewhat limited, particularly when considering algorithms which are both (A) proven to converge and (B) designed to leverage parallel and distributed computing environments. In this article, we consider a promising recent class of algorithms which satisfies both of these criterion -- {\em projective splitting} (PS) algorithms.
+
+
+In 2008, Eckstein and Svaiter proposed the {\em projective splitting} framework for finding a zero of a sum of maximally monotone operators, and in particular, for minimizing a sum of nonsmooth convex functions \cite{Ecks08}. In recent years, projective splitting algorithms have received attention from the optimization community, with many variants and new convergence rates being established \cite{John19,John21,John22}. Perhaps one of the first major theoretical breakthroughs for this class of algorithm came in 2016--2018, when it was proven that allowing for parallelized updates with bounded asynchrony is still guaranteed to converge to a solution of the mathematical optimization problem at-hand \cite{Ecks17,Comb18}. In some sense, this capability sets projective splitting algorithms apart from other convex optimization algorithms: Even if we only consider the synchronous version of PS, there are several desirable properties exhibited by PS (e.g., block-iterativeness, fully nonsmooth capabilities, and no requirement of linear operator bounds)which, it seems, do not simultaneously occur for other algorithms \cite{BuiC22}. Hence, in combination with the benefits outlined in \cite{BuiC22} (whose scope only involved synchronous algorithms), the capability for asynchrony sets projective splitting apart from other algorithms. Its full potential was used to develop a specialized algorithm for the task of progressive hedging in \cite{Ecks23-PH}. However, aside from the specialized application in \cite{Ecks23-PH}, it appears that all of the computational experiments involving projective splitting algorithms thus-far have focused on the \textit{synchronous} case \cite{BuiC22,John22}. Furthermore, there is a lack of literature discussing general implementation of the algorithms theoretically proven to converge in \cite{Ecks17,Comb18}. For instance, PS is proven to converge for a wide range of hyperparamers; however, for some applications, the hyperparameters can drastically influence performance. Our main goal of this article is to (A) fill this gap in the literature by sharing our experience in using asynchronous algorithms on applications in classifier training and image processing, and (B) provide an open-source software implementation of the asynchronous parallel PS algorithm of \cite{Comb18}. 
+
+\subsection{Literature Review}
+
+One computational study was performed by \cite{BuiC22}, where it was established that the synchronous algorithms \cite{Comb15} and \cite{Comb18} (in synchronous mode) appear to be the only two methods with certain desirable properties for mathematical optimization (e.g., the abilities to fully split the mathematical optimization problem, handle nonsmoothness, and omit estimates for the norm of the linear operators). It was shown that, in several applications in machine learning and image processing, \cite{Comb18} appears to out-perform \cite{Comb15} in terms of wall-clock time. However, the experiments in \cite{BuiC22} were entirely for the synchronous version of the projective splitting algorithm in \cite{Comb18}.
+A more recent variant of projective splitting is also proven to allow for parallel block-asynchronous updates \cite{John22}. While the article includes very impressive experiments, it again does not study the impact of asynchrony. 
+
+
+It appears that the only current implementation of projective splitting with asynchrony implemented is for the specific application to the progressive hedging method of Rockafellar and Wets \cite{Ecks23-PH}. The method studied in \cite{Ecks23-PH}, which is a special case of \cite{Ecks17,Comb18}, is shown to perform exceedingly well for this particular application. This work is encouraging for us to develop a general software implementation of \cite{Comb18} \textit{with asynchrony} for the use in all applications, not just that of progressive hedging.
+
+\section{Background}
+We begin with preliminaries; for further background, see \cite{bauschke2011convex}.
+\label{sec:bg}
+
+% Begin with a higher level view and then define as
+
+% IDEA - 
+% 2.1 Mathematical Optimisation - Prox operators, Why prox is not a linear operator, introducing Splitting Algorithms. Scope of block-activation, Scope of Asynchrony. 
+% 2.2 Notation
+% 2.3 Algorithm     
+\subsection{Mathematical Optimisation}
+Let $\HH$ be a real, finite dimensional Hilbert Space with norm $\|\cdot\|$ and inner product $\scal{\cdot}{\cdot}$. We define the extended real line $\RT$ as $(-\infty , \infty) \cup \{-\infty, +\infty\}$. For algebra on the extended real line, for the purposes of optimisation, we are mainly concerned with defining addition, a binary operator such that for $x \in \RR, x+\infty = \infty$ and $\infty + \infty = \infty$.
+
+For $f : \HH \to \RT$, we are interested in finding $$\underset{x\in\HH}{\textrm{argmin}} f(x)$$
+\begin{definition}
+The proximity operator $\prox_{\gamma f}(x)$ of a function $f\colon\HH\to[-\infty,+\infty]$ at point $x$ with parameter $\gamma > 0$ is defined as:
+\[
+\prox_{\gamma f}(x) = \underset{y\in\HH}{\normalfont{\textrm{argmin}}} \left\{ f(y) + \frac{1}{2\gamma}\|y - x\|_2^2 \right\}.
+\]
+\end{definition}
+The simplest example of using proximity operators for minimisation is perhaps \cite{martinet1970} showing the sequence formed by the recursive application of $\prox_{\gamma f}$ converges to a minimizer of $f$.
+As is well-known in the optimization community, computing $\prox_{\Sigma f_i}$, i.e., the proximity operator for the sum $\Sigma f_i$, is oftentimes computationally expensive or intractable; on the other hand, evaluating the individual operators $(\prox_{f_i})_{i \in I}$ is far easier. Minimising sums via the use of the individual proximity operators is called \emph{splitting}.
+
+We implement Algorithm~4 of \cite{Comb18} which, in addition to being a splitting algorithm, is also block-activated, and asynchronous. For minimising the sum of functions $\Sigma f_i$ for $i \in \{1,...,m\}$, computing $\prox_{\gamma f_i}$ for each $i$, may still be prohibitively slow. \emph{Block-activated} (or \emph{block-iterative}) algorithms activate a subset $I_n \subset \{1,...,m\}$ of the proximity operators, during the $n^{\text{th}}$ iteration. Asynchrony in our algorithm allows us to compute proximity operators $\prox_{\gamma f_i}$ for $ i \in I_{n+1}$ without waiting for the proximity operators to be computed in $I_n$. \\
+
+
+\subsection{Notation and problem formulation}
+Our notation and definitions are standard in continuous optimization; for further background see, e.g., \cite{bauschke2011convex}. We will use $\HH$ to represent a Hilbert Space with inner product $\scal{\cdot}{\cdot}$ and $\| \cdot \| = \sqrt{\scal{\cdot}{\cdot}}$. For most problems our $\HH$ will be $\RR^n$ with inner product as the usual Euclidean dot product.
+The direct sum is defined as $  \bigoplus_{i=1}^{m} {\HH_i} = {\HH_1} \times \ldots \times {\HH_m}$, where ${\HH_i}$ represents the $i^{th}$ Hilbert space. 
+The inner product on the direct sum is defined as \\
+$\langle (x_i)_{i=1}^{m}, (y_i)_{i=1}^{m} \rangle = \sum_{i=1}^{m} {\langle x_i, y_i \rangle}_{\HH_i}$ 
+where $(x_i)_{i=1}^{m}, (y_i)_{i=1}^{m} \in \bigoplus_{i=1}^{m} {\HH_i}. $ The set of functions from $\HH$ to $\RT$ that are convex, lower-semicontinuous, and proper is denoted $\H0$.
+%\begin{definition}
+%\label{def:gamma0}
+%We define
+%$$\textbf{$\H0$} = \{f:\HH\to \RT |\ \text{$f$
+%is convex, lower-semicontinuous, and proper} \}. $$
+%\end{definition} 
+
+
+Our implementation of \cite{Comb18} minimises an objective function of the following form
+\begin{equation}
+ \label{eq:problem} 
+    \underset{(x_i)_{i \in I} \in \bigoplus {\HH_i}}{\text{minimize}} \quad \sum_{i \in I} f_i(x_i) + \sum_{k \in K} g_k\Big(\sum_{i \in I} (L_{ki} \cdot x_i)\Big)  
+\end{equation}
+where  $f_i : \HH_i \to \RR \text{ with } f_i \in \Gamma_0(\HH_i)$ and 
+$g_k : \GG_k \to \RR \text{ with } g_k \in \Gamma_0(\GG_k)$.  $(\HH_i)_{i \in I}$ and $(\GG_k)_{k \in K}$ are real Hilbert spaces with $I =\{1,..,m\}$, $K = \{1,..,p\}$ and $L_{ki}: \HH_i \rightarrow \GG_k$ are linear operators $\forall k \in K, i \in I$. From here on, we will use $g_k(x)$ to represent the splitting functions that take in a linear combination of transformed $x_i$ as their inputs.
+\newline
+
+\subsection{The variational Combettes-Eckstein projective splitting algorithm}
+
+The variational Combettes-Eckstein projective splitting algorithm is proven to converge under the following assumptions \cite{Comb18}.
+\begin{assumption}
+\label{assumption-main}
+For every $i \in I $ and every $k \in K,$ let $(c_i(n))_{n \in \NN}$ and $(d_k(n))_{n \in \NN}$ be the sequences in $\NN$ that represent the most recent iterations for which (A) computations $\prox_{f_i}$ or $\prox_{g_k}$ were respectively launched, and (B) their computation has completed by the current iteration $n$.
+\begin{enumerate}
+\item 
+A solution to \eqref{eq:problem} exists.
+    \item For every $i\in I$ and $k\in K$, we have $f_i\in\Gamma_0(\HH)$ and $g_k\in\Gamma_0(\GG)$.\footnote{ usually $\HH$ and $\GG$ are of the form $\bigoplus_{i=1}^{m} {\RR^{n_i}}$}
+    
+    \item There exists a strictly positive integer M such that 
+    \begin{equation}
+    \forall n \in \NN, \bigcup_{j=n}^{n+M-1} I_j = I \text{ and } \bigcup_{j=n}^{n+M-1} K_j = K.
+    \label{eq:iterative}
+    \end{equation}
+    \label{item:block_union}
+    \item There exists a positive integer $D$ such that for every iteration $n\in\NN$, and all indices $i\in I$, $k\in K$, we have
+    \begin{equation}
+    n-D \leq c_i(n) \leq n  \text{ and }  n-D \leq d_k(n) \leq n.
+    \end{equation}
+    \label{eq:delay}
+    \label{item:defn_D}
+    \item The hyperparameters $\gamma_{i,n}$ and $\mu_{k,n}$ are bounded away from $0$ and $\infty$. That is,
+    \begin{equation}
+0 < \liminf_{n \to \infty} \gamma_{i,n} \leq \limsup_{n \to \infty} \gamma_{i,n} < \infty,
+\end{equation}
+\begin{equation}
+0 < \liminf_{n \to \infty} \mu_{k,n} \leq \limsup_{n \to \infty} \mu_{k,n} < \infty.
+\end{equation}
+
+\end{enumerate}
+\end{assumption}
+% \comment{TODO: add interpretations of Assumptions 2.3 - ii, iii}
+Here, \ref{item:block_union} ensures that for some positive integer $M$, every $M$ consecutive blocks cover the entire set. Further, \ref{item:defn_D} ensures that at any current iteration, no prox computation that is left is older than $D$.
+\begin{algorithm}[H]
+\caption{Combettes-Eckstein Algorithm \cite{Comb18}}
+\label{alg:scg}  
+\begin{algorithmic}[1]
+\REQUIRE $I_0=\{1,\ldots,m\}$ and $K_0=\{1,\ldots,p\}$. 
+Suppose Assumption~\ref{assumption-main} holds and $(c_i(n))_{n \in \NN}$ and $(d_k(n))_{n \in \NN}$ are sequences in $\NN$ as defined in \ref{assumption-main}.
+For every $i\in
+\{1,\ldots,m\}$ and every $k\in\{1,\ldots,p\}$, let
+$\{\gamma_{i,n},\mu_{k,n}\}\subset\RPP$, $x_{i,0}\in\HH_i$, and
+$v_{k,0}^*\in\GG_k$. 
+\FOR{$n=0, 1$ \textbf{to} $\dotsc$}
+\STATE $\lambda_n\in\left]0,2\right[$
+\IF{$n>0$}
+\STATE Select $\emp\neq I_n\subset\{1,\ldots,m\}$
+and $\emp\neq K_n\subset\{1,\ldots,p\}$
+\ENDIF
+\FOR{$i\in I_n$}
+\STATE $x^*_{i,c_i(n)}=x_{i,c_i(n)}-\gamma_{i,c_i(n)}\sum_{k=1}^pL_{k,i}^*v_{k,c_i(n)}^*$
+\STATE $a_{i,n}=\prox_{\gamma_{i,c_i(n)}f_i}x_{i,c_i(n)}^*$
+\STATE $a_{i,n}^*=\gamma_{i,c_i(n)}^{-1}(x_{i,c_i(n)}^*-a_{i,n})$
+\ENDFOR
+\STATE $(a_{i,n},a_{i,n}^*)_{i\in\{1,\ldots,m\}\smallsetminus I_n}=(a_{i,n-1},a_{i,n-1}^*)_{i\in\{1,\ldots,m\}\smallsetminus I_n}$
+\FOR{$k\in K_n$}
+\STATE $y_{k,n}^*=\mu_{k,d_k(n)}v_{k,d_k(n)}^*+\sum_{i=1}^mL_{k,i}x_{i,d_k(n)}$
+\STATE $b_{k,n}=\prox_{\mu_{k,d_k(n)}g_k}y_{k,n}^*$
+\STATE $b^*_{k,n}=\mu_{k,d_k(n)}^{-1}(y_{k,n}^*-b_{k,n})$
+\ENDFOR
+\STATE $(b_{k,n},b^*_{k,n})_{k\in\{1,\ldots,p\}\smallsetminus K_n}=(b_{k,n-1},b^*_{k,n-1})_{k\in\{1,\ldots,p\}\smallsetminus K_n}$
+%\FOR{$k\in\{1,\ldots,p\}$}
+\STATE $(t_{k,n})_{k\in\{1,\ldots,p\}}=(b_{k,n}-\sum_{i=1}^mL_{k,i}a_{i,n})_{k\in\{1,\ldots,p\}}$
+%\ENDFOR
+%\FOR{$i\in \{1,\ldots,m\}$}
+\STATE $(t^*_{i,n})_{i\in\{1,\ldots,m\}}=(a^*_{i,n}+\sum_{k=1}^pL_{k,i}^*b^*_{k,n})_{i\in\{1,\ldots,m\}}$
+%\ENDFOR
+\STATE $\tau_n=\sum_{i=1}^m\|t_{i,n}^*\|^2+\sum_{k=1}^p\|t_{k,n}\|^2$
+\IF{$\tau_n>0$}
+\STATE \begin{varwidth}[t]{\linewidth}
+$\pi_n=\textstyle\sum_{i=1}^m\big(\scal{x_{i,n}}{t^*_{i,n}}-
+\scal{a_{i,n}}{a^*_{i,n}}\big)
++\sum_{k=1}^p\big(\sscal{t_{k,n}}{v_{k,n}^*}$\par
+\hskip\algorithmicindent\quad \quad$- \sscal{b_{k,n}}{b^*_{k,n}}\big)$ %How to change the indent here?
+\end{varwidth}
+\ENDIF
+\IF{$\tau_n>0\;\text{and}\;\pi_n>0$}
+\STATE $\theta_n=\lambda_n\pi_n/\tau_n$
+\STATE $(x_{i,n+1})_{i\in\{1,\ldots,m\}}=(x_{i,n}-\theta_nt^*_{i,n})_{i\in\{1,\ldots,m\}}$
+\STATE $(v_{k,n+1}^*)_{k\in\{1,\ldots,p\}}=(v_{k,n}^*-\theta_nt_{k,n})_{k\in\{1,\ldots,p\}}$
+\ELSE
+\STATE $(x_{i,n+1})_{i\in\{1,\ldots,m\}}=(x_{i,n})_{i\in\{1,\ldots,m\}}$
+\STATE $(v_{k,n+1}^*)_{k\in\{1,\ldots,p\}}=(v_{k,n}^*)_{k\in\{1,\ldots,p\}}.$
+\ENDIF
+\ENDFOR
+\end{algorithmic}
+\end{algorithm}
+
+\begin{theorem}[{{\cite[Theorem~5]{Comb18}}}]
+Consider the problem of \eqref{eq:problem} using Algorithm~\ref{alg:scg} under Assumptions~\ref{assumption-main}. Then
+%\begin{enumerate}
+%   \item 
+the sequences $\mathbf{x}_n = (x_{i,n})_{i \in I}$ and $\mathbf{a}_n=(a_{i,n})_{i\in I}$ converge to a solution of \eqref{eq:problem}.
+%    \item For $F_n = \sum_{i \in I} f_i(x_{i,n}) + \sum_{k \in K} g_k\left(\sum_{i \in I} (L_{ki} \cdot x_{i,n})\right), \\
+%\quad \lim_{n \to \infty} F_n = \underset{(x_i)_{i \in I} \in \bigoplus {\HH_i}}{\min} \quad \sum_{i \in I} f_i(x_i) + %\sum_{k \in K} g_k\Big(\sum_{i \in I} (L_{ki} \cdot x_i)\Big)$.
+%\end{enumerate}
+\end{theorem}
+
+\section{Methodologies}
+\label{sec:methods}
+We engineered our application to be compatible with \texttt{Julia 1.9.0} and higher versions. It is compatible with any proximal operators of the type defined in \texttt{ProximalOperators.jl}\footnote{\url{https://juliafirstorder.github.io/ProximalOperators.jl/latest/}}. We also allow for usage of custom prox operators for complex functions in the format prescribed by the library wherever needed. To handle asynchronous programming, we make use of Julia's \texttt{Distributed}\footnote{\url{https://docs.julialang.org/en/v1/stdlib/Distributed/}} library, spawning P processors and cyclically assigning prox computations over them.  %Not specifically added a way to change this but can be changed with a few lines of code by the user. 
+
+The code requires the following inputs  
+\begin{enumerate}
+    \item $m, p$ : to describe the blocks $I = [m], K = [p]$.
+    \item $(f_i)_{1 \leq i \leq m}, (g_k)_{1 \leq k \leq p}$ : the definitions for functions corresponding to \eqref{eq:problem}. The prox computation for non-standard functions can also be added in the format prescribed by \texttt{ProximalOperators.jl}.
+    \item $L$ : Abstract matrix consisting of operators $L_{ki}$ used inside \eqref{eq:problem}. The operators $L_{ki}$ can be input either as matrices or as functions. We add support of \texttt{LinearAlgebra.jl}\footnote{\url{https://docs.julialang.org/en/v1/stdlib/LinearAlgebra/}} for the use of these operators.
+    \item $L^*$ : Abstract matrix consisting of the adjoint operators $L^*_{ki}$.
+    \item $D$ : the maximum delay allowed in iterations. As defined in Assumption~\ref{assumption-main}.
+    \item $I_n, K_n$ : in the form of functions that return the corresponding blocks for the $n^{\text{th}}$ iteration. 
+    \item $\gamma_{i,n}, \mu_{i,n}$ : In the form of functions \texttt{generate\_gamma(i,n)} and \newline \texttt{generate\_mu(i,n)}.
+\end{enumerate}
+
+We implement the algorithm to be able to handle inputs with variable sizes i.e., for $x \in \bigoplus_{i=1}^{m} {\HH_i}$, the input can belong to $\bigoplus_{i=1}^{m} \RR^{k_i}$ where $k_i$ can be all different. The $L$ matrix consisting of $L_{ki}$ operators mentioned in the original equation, can be inputted as a matrix of operators of the form of both - matrices and functions.
+We allow this flexibility so that when $L_{ki}$ operator is a matrix, the adjoints can be simply handled as the transpose; on the other hand, when inputting operators as a function which computes matrix vector products, a means to compute of their adjoint operators ($L_{ki}^*$) must be provided.\\
+
+The blocks ($I_n$), where $n$ is the iteration count, can be described by the user as a function of $n$. We provide standard block functions $(I_n)_{n \in \NN}$ (for $|I| = m$) such as:
+\begin{enumerate}
+    \item Full activation: $I_n = I$.
+    \item Cyclic activation: $I_n = \{n \mod m\}$.
+    \item Cyclic $\frac{1}{M}$ activation : $I_n = \{ k, k+1, ... , k + \lfloor \frac{(n-1)m}{M}\rfloor -1 \}$  with appropriate $k$ to ensure
+$\cup_{n=1}^M I_n = I, I_{n+M} = I_n$.
+\end{enumerate}
+
+We also provide mechanisms to record observations such as $||x_n - x_{n-1}||$, $||x_n - x_{\infty}||$, function values and more over - epochs (refer Remark~\ref{remark:epoch_def} for definition), iterations or prox-calls. These quantities are used to estimate optimality of the current iterate, speed of convergence and compare relative optimality respectively over different variables. We used $x_{2*\texttt{total\_iters}}$ for approximating $x_{\infty}$ by default (but this value can easily be modified by the user).
+
+\begin{remark}
+\label{remark:epoch_def} We call one \emph{epoch} as the set of iterations during which every prox computation for each function in $(f_i)_{i \in I}$ and $(g_k)_{k \in K}$ has been performed at least once.
+\end{remark}
+
+\section{Experiment Setup and Results}
+
+Two problem settings (Sections~\ref{sec:ex1}--\ref{sec:ex2}) were used in our experiments (Sections~\ref{sec:async}--\ref{sec:hyper}).
+Computations were performed on a Dell PowerEdge R470 system, running Linux with HPC jobs managed by slurm, equipped with 1500 GB of RAM, 24 cores, and 48 threads. The system runs on Intel(R) Xeon(R) Gold 6246 processors. The implementation and experimentation code can be found in our repository \href{https://github.com/zevwoodstock/AsyncProx/}{\texttt{https://github.com/zevwoodstock/AsyncProx/}}.
+
+\subsection{Problem 1: Sparse linear classifier training}
+
+\label{sec:ex1}
+We consider the classification problem of \cite{combettes2019learning}, known as the {\em latent group lasso}, or {\em lasso with group overlap}. Let $\{G_1, \dots, G_m \}$ be a covering of $\{1,2, \dots, d\}$. Define $X = \{x_1, \dots, x_m | x_i \in \RR^d, \text{support}(x_i) \subset G_i\}$. The ideal classification vector is $\Tilde{y} = \Sigma_{i=1}^m{x_i}$ where $({x_i})_{i=1}^m$ is a solution of
+\begin{equation}
+    \argmin_{\mathbf{x}_1, \mathbf{x}_2, \ldots, \mathbf{x}_m \in X}  \sum_{i=1}^{m} \|\mathbf{x}_i\|^2 + \sum_{k=1}^{p} g_k\left(\sum_{i=1}^{m} \langle \mathbf{x}_i, \boldsymbol{\mu}_k \rangle\right)
+    \label{eq:p1},
+\end{equation}
+where $\mu_k \in \RR^d$,
+$g_k(\xi) = 10 \max\{0, 1 - \beta_k \xi\}$, where $\beta_k = \omega_k\text{sign}(\scal{y}{\mu_k})$ is the $k^{\text{th}}$ measurement of the true vector $y \in \RR^d$ $(d=10,000)$.
+To generate $\mu_k$, we sampled $\mathbf{v} \sim \mathcal{N}(0, I_d)$, where $I_d$ is the identity matrix, and set $\mu_k = \mathbf{v} / \|\mathbf{v}\|_2$.
+The values $\omega_k \in \{-1, 1\}$ are selected so that $25\%$ of them (selected uniformly at random) are misclassified.
+The number of measurements made on true value $y$ that we want to approximate is $p = 1000$. There are $m = 1429$ groups. For every $i \in \{1,...,m-1\}$ each $G_i$ has 10 consecutive integers and an overlap with $G_{i+1}$ of 3.
+
+We observe that the support vectors ${x}_i$ are sparse with only $|G_i| = 10$ non-zero elements out of $d$ total. To improve the memory requirements for this problem, $\mathbf{x}_i$ is replaced by $\Tilde{\mathbf{x}}_i$ in \eqref{eq:p1} where  $\Tilde{\mathbf{x}}_i \in \RR^{10}$ and $\Tilde{X}$ is the set containing the compressed support vectors $\Tilde{x}_i$. Thus we can use $F : \RR^{10} \to \RR^d$ such that $\forall i \in \{1,...,m-1\}$, $F(\Tilde{\mathbf{x}}_i) = {\mathbf{x}}_i$, i.e., it pads $\Tilde{\mathbf{x}}_i$ with zeros.consisting
+
+To construct this and an instance of Equation \eqref{eq:problem}, we rewrite such that $({\Tilde{x}_i})_{i=1}^m$ is given by
+\begin{equation}
+    \argmin_{\mathbf{\Tilde{x}}_1, \ldots, \mathbf{\Tilde{x}}_m \in X}  \sum_{i=1}^{m} \|\mathbf{\Tilde{x}}_i\|^2 + \sum_{k=1}^{p} g_k\left( \langle y_k , \boldsymbol{\mu}_k \rangle\right),
+\end{equation}
+where $\Tilde{x}_i \in \RR^{10}, \mu_k \in \RR^d$ and   $y_k = \sum_{i \in I} (L_{ki} \cdot \mathbf{\Tilde{x}}_i)$, $L_{ki} : \RR^{10} \to \RR^d $ such that \\ $L_{ki}\mathbf{\Tilde{x}}_i = F(\mathbf{\Tilde{x}}_i)$. This can then be formulated into \eqref{eq:problem} by setting $f_i:\HH_i = \RR^{10} \to (-\infty, \infty]$ and $g_k$ : $\mathcal{G}_k = \RR^d \to (-\infty, \infty]$ such that, for every $1 \leq i\leq m$ and every $ 1\leq k \leq p$,
+$ f_i : x_i \mapsto \|x_i\|^2$ and $g_k : y_k \mapsto 10\max\{0, 1 - \beta_k \langle y_k, \mu_k \rangle \} $,
+where $y_k = \sum_{i \in I} (L_{ki} \cdot x_i)$ and  $L_{ki} = F$. 
+We can check that the adjoint of our $L_{ki}$ operator is 
+$L^*_{ki} : \RR^{d} \to \RR^{10} $ such that for $y \in \RR^d, L^*_{ki}(y) = (y_{7i+1}, y_{7i+2},..., y_{7i+10} )$.
+
+The operators $\prox_{f_i}$ are available in \texttt{ProximalOperators.jl}, and $\prox_{g_k}$ are calculated using \cite[Proposition~24.14]{bauschke2011convex}.
+\\
+% Our goal is to reconstruct the group-sparse vector $y$. We can write the summation of inner products inside $g_k$ as \\
+% $\Sigma_{i=1}^m \scal{\boldsymbol{x_i}}{\boldsymbol{\mu_k}}$ \\
+% $= \scal{\Sigma_{i=1}^m\boldsymbol{x_i}}{\boldsymbol{\mu_k}}$
+% $= \scal{\Sigma_{i=1}^m\boldsymbol{x_i}}{\boldsymbol{\mu_k}}$
+ 
+
+\subsection{Problem 2: Image Recovery}
+\label{sec:ex2}
+We consider a Stereoscopic Image Recovery problem akin to \cite[Section~4.2]{combettes2019proximal} where, instead of restoring a pair of images, we restore a series of $M$ images $\{x_i\}_{1 \leq i \leq M}, x_i \in \RR^N$. Noisy degraded versions are available via
+\[
+z_i = \mathcal{L} x_i + w_i, \quad w_i \sim \mathcal{N}(0, \sigma^2 \mathbf{I}),
+\]
+where $\mathcal{L}$ blurs via convolution with a $5\times 5$ averaging kernel with equal weights, and $w_i$ is additive Gaussian noise with mean zero and variance $\sigma^2 = 0.0001$. The stereoscopy $x_i\approx D_ix_{i+1}$ is modeled by successive horizontal shift operators $D_i : \RR^N \mapsto \RR^N$ $\forall i \in [M-1]$ with estimated shift values. We seek to solve
+\begin{equation}
+ \argmin_{x_i\in \mathbb{R}^N, 1\leq i \leq M} 
+\sum_{i=1}^{M} \sum_{k=1}^{N} \phi_{i,k}(\langle x_{i} | e_{i,k} \rangle) +  
+\sum_{i=1}^{M} \frac{1}{2\sigma^2}||\mathcal{L}x_{i} - z_{i}||^2 
++ \sum_{i=1}^{M-1} \frac{v}{2}||x_{i} - D_ix_{i+1}||^2, 
+\label{gen_obj_stereo}
+\end{equation}
+where $(e_{i,k})_{1\leq k \leq N}$ are orthonormal symlet wavelet basis vectors and $\phi_{i,k} = \mu_{i,k}|\cdot|$. \footnote{In our experiment, we choose $\mu_{i,k} = 1$.}
+This can be formulated into our optimisation algorithm's input as follows.
+Let $\HH_i = \RR^N$, $\mathcal{G}_i = \RR^N$, 
+$ f_i (x_i)=  |\langle\ (\mu_{i,k}) _{k \in N}| \textbf{DWT}(x_i) \rangle|$ for $ 
+ 1\leq i \leq M $, and
+$$g_k ( y_k)= 
+\begin{cases} 
+\frac{1}{2\sigma^2} ||y_k - z_i||^2 & \text{for } 1 \leq k \leq M, \\
+\frac{\vartheta}{2} ||y_k||^2 & \text{for } M+1 \leq k \leq 2M-1,
+\end{cases}$$
+where \textbf{DWT} is the Discrete Wavelet Transform Operator.
+% Description here for the prox:
+The proximal operator for $f$ is computed as 
+$
+\textbf{IDWT} \left( \text{prox}_{\|\cdot\|_1}(\textbf{DWT}(x)) \right),
+$
+where \(\text{prox}_{\|\cdot\|_1}\) denotes the soft-thresholding operation and \(\textbf{IDWT}\) represents the inverse discrete wavelet transform.
+
+%Let $\mathcal{L}$ be a block matrix operator that applies a degradation function (such as blurring) to each image, along with shift operations for adjacent images. Specifically, $\mathcal{L}$ is structured as follows:
+%\[
+%L = \begin{bmatrix}
+%    \mathcal{D} & 0 & \cdots & 0 \\
+%    0 & \mathcal{D} & \cdots & 0 \\
+%    \vdots & \vdots & \ddots & \vdots \\
+%    \mathcal{I} & \mathcal{D}_1 & \cdots & \mathcal{D}_{m-1}
+%\end{bmatrix}
+%\]
+%where \( \mathcal{D} \) is the degradation function applied to each image, represented as a matrix function, \( \mathcal{D}_i \) is the image shift operator, shifting the \(i\)-th image by a certain number of pixels, and \( m \) is the total number of images.
+%
+%Similarly, the adjoint operator \( L^* \) is defined as:
+%\[
+%L^* = \begin{bmatrix}
+%    \mathcal{D}^* & 0 & \cdots & 0 \\
+%    0 & \mathcal{D}^* & \cdots & 0 \\
+%    \vdots & \vdots & \ddots & \vdots \\
+%    \mathcal{I}^* & \mathcal{D}_1^* & \cdots & \mathcal{D}_{m-1}^*
+%\end{bmatrix}
+%\]
+%where \( \mathcal{D}_i^* \) represents the adjoint shift operator, which undoes the shifts applied by \( \mathcal{D}_i \).
+%
+Let $\mathcal{L}$ be the degradation operator and $D$ be the disparity matrix. Then, \\
+\begin{equation}
+    \text{for }  1\leq k \leq M, \text{ }  L_{ki} =
+\begin{cases}
+    \mathcal{L} & \text{if } i = k \\
+    0 & \text{otherwise} 
+\end{cases}
+\end{equation}
+
+\begin{equation}
+    \text{for }  M+1\leq k \leq 2M-1, \text{ }  L_{ki} =
+\begin{cases}
+    \Id & \text{if } i = k \\
+    -D_{i-k} & \text{if } i = k+1 \\
+    0 & \text{otherwise} 
+\end{cases}
+\end{equation}
+
+\begin{figure}[H]
+\centering
+\begin{tabular}{@{}c@{}c@{}c@{}}
+\includegraphics[width=4.1cm]{Image Restoration/orig_1.jpeg}&
+\hspace{0.2cm}
+\includegraphics[width=4.1cm]{Image Restoration/deg_1.jpeg}&
+\hspace{0.2cm}
+\includegraphics[width=4.1cm]{Image Restoration/ret_1.jpeg}\\[-0.1cm]
+\footnotesize{(1a)} & \footnotesize{(2a)} &
+\footnotesize{(3a)} \\
+\includegraphics[width=4.1cm]{Image Restoration/orig_2.jpeg}&
+\hspace{0.2cm}
+\includegraphics[width=4.1cm]{Image Restoration/deg_2.jpeg}&
+\hspace{0.2cm}
+\includegraphics[width=4.1cm]{Image Restoration/ret_2.jpeg}\\[-0.1cm]
+\footnotesize{(1b)} & \footnotesize{(2b)} &
+\footnotesize{(3b)} \\
+\includegraphics[width=4.1cm]{Image Restoration/orig_3.jpeg}&
+\hspace{0.2cm}
+\includegraphics[width=4.1cm]{Image Restoration/deg_3.jpeg}&
+\hspace{0.2cm}
+\includegraphics[width=4.1cm]{Image Restoration/ret_3.jpeg}\\[-0.1cm]
+\footnotesize{(1c)} & \footnotesize{(2c)} &
+\footnotesize{(3c)} \\
+\includegraphics[width=4.1cm]{Image Restoration/orig_4.jpeg}&
+\hspace{0.2cm}
+\includegraphics[width=4.1cm]{Image Restoration/deg_4.jpeg}&
+\hspace{0.2cm}
+\includegraphics[width=4.1cm]{Image Restoration/ret_4.jpeg}\\[-0.1cm]
+\footnotesize{(1d)} & \footnotesize{(2d)} &
+\footnotesize{(3d)} \\
+\end{tabular} 
+\caption{
+Original stereoscopic images (column 1),
+Degraded stereoscopic images (column 2) and their corresponding restored images (column 3).
+}
+\label{fig:image_restored_degraded}
+\end{figure}
+
+We ran our algorithm for $300$ iterations over the formulation described by \eqref{gen_obj_stereo}. The images in Image~\ref{fig:image_restored_degraded} were taken after roughly equal horizontal displacement. The disparity matrix for each pair was thus found by trial and error. 
+  
+\subsection{Experiment 1: Synchrony versus asynchrony}
+\label{sec:async}
+ 
+We performed an experiment to determine if asynchrony can provide a speedup in practice. 
+We also compared the performance of the asynchronous run of our implementation over variable number of processors.
+\subsubsection{Setup}
+We ran the algorithm on Problem~1 (Section~\ref{sec:ex1}) and set $D$ to 0 for the synchronous case and 5 for asynchronous. This variable describes the maximum delay (in terms of number of iterations) that is allowed before prox evaluation, i.e., the heaviest part of our computation, is completed. \\ 
+To simulate latencies, an artificial delay $t$ associated with prox computation was added with $t \sim \mathcal{U}(0, 0.5)$ and added variance $e \sim \mathcal{N}(0, 0.005)$.
+We ran the algorithm for 10 iterations (which was sufficient to get $\frac{||x_n - x_{n-1}||^2}{||x_n - x_0||^2} \approx 10^{-2}$) with blocks $I_n = [1, m]$, i.e., full activation and $\mu_i = 0.42 - 0.01i$, $\gamma_i = 1$. Results were averaged over 10 runs with $x_\infty$ being taken as the position reached value after double the total iterations.
+
+\subsubsection{Results}
+
+\begin{table}[h!]
+    \centering
+    \begin{tabular}{|>{\centering\arraybackslash}m{1cm}|>{\centering\arraybackslash}m{1cm}|>{\centering\arraybackslash}m{2.5cm}|>{\centering\arraybackslash}m{3cm}|>{\centering\arraybackslash}m{2cm}|>{\centering\arraybackslash}m{2cm}|}
+        \hline
+        \textbf{P} & 
+        \textbf{$D$} & 
+        \textbf{Sync/Async} & 
+        $\frac{||f(x_{\text{min}}) -f(x_{\infty})||^2}{||f(x_0) - f(x_{\infty})||^2}$ 
+        & 
+        $\frac{||x - x_{\infty}||^2}{||x_0 - x_{\infty}||^2}$
+        & \textbf{Time} \\ \hline
+        2 & 0 & Sync  & 0.00149 & 0.500 & 185.971s \\ \hline
+        2 & 5 & Async & 0.00131 & 0.348 & 138.484s \\ \hline
+        3 & 0 & Sync  & 0.00173 & 0.441 & 232.469s \\ \hline
+        3 & 5 & Async & 0.00142 & 0.362 & 130.118s \\ \hline
+    \end{tabular}
+    \caption{Comparison of Asynchronous vs Synchronous run}
+    \label{tab:performance}
+\end{table}
+
+\begin{table}[h!]
+    \centering
+    \begin{tabular}{|>{\centering\arraybackslash}m{1cm}|>{\centering\arraybackslash}m{1cm}|>{\centering\arraybackslash}m{2.5cm}|>{\centering\arraybackslash}m{3cm}|>{\centering\arraybackslash}m{2cm}|>{\centering\arraybackslash}m{2cm}|}
+        \hline
+        \textbf{P} & 
+        \textbf{$D$} & 
+        \textbf{Sync/Async} & 
+        $\frac{||f(x_{\text{min}}) -f(x_{\infty})||^2}{||f(x_0) - f(x_{\infty})||^2}$ 
+        & 
+        $\frac{||x - x_{\infty}||^2}{||x_0 - x_{\infty}||^2}$
+        & \textbf{Time} \\ \hline
+        2 & 5 & Async  & 0.00131 & 0.348 & 138.484s \\ \hline
+        3 & 5 & Async & 0.00142 & 0.342 & 130.118s \\ \hline
+        4 & 5 & Async & 0.00154 & 0.349 & 132.552s \\ \hline
+        5 & 5 & Async  & 0.00193 & 0.357 & 134.044s \\ \hline
+        6 & 5 & Async & 0.00142 & 0.361 & 135.634s \\ \hline
+        7 & 5 & Async & 0.00142 & 0.365 & 139.380s \\ \hline
+        8 & 5 & Async & 0.00142 & 0.363 & 144.286s \\ \hline
+    \end{tabular}
+    \caption{Time taken for Async run with different number of Processors}
+    \label{tab:processors}
+\end{table}
+
+Here, \textbf{P} is the number of processors used and $D$ is the maximum allowed delay (see Assumption~\ref{assumption-main}). We see from Table~\ref{tab:performance} that the Asynchronous run takes considerably less time while also approaching optimality just as well. Table~\ref{tab:processors} presents the expected pattern of the optimal number of processors that minimizes the time taken, beyond which the overhead from additional processors begins to increase the total execution time.  We expect this trend to remain true in general, although the ideal number of processors will change depending on the overhead due to parallelization, which is heavily dependent upon the problem and machine architecture.
+
+\subsection{Experiment 2: Hyperparameter search}
+\label{sec:hyper}
+In this experiment, we try to find the best performing settings for the hyperparameters $\gamma_n$ and $\mu_n$ where $n$ is the number of iterations. For a single iteration, their values were taken to be constant for different Proximal operators.
+
+We first search to find the ideal value of $\mu_n = c_1$ and $\gamma_n = c_2$, i.e., constant w.r.t. $n$. This was done by performing a grid search over the logarithmic scale followed by a ternary search between the two best performing orders. The objective values for comparison were the function values for Problem~\ref{sec:ex1} and Problem~\ref{sec:ex2} as two separate independent searches.  We found that the values: ($\mu_n = 0.332$, $\gamma_n = 0.0001$), were the optimal values for Problem~\ref{sec:ex1} for full activation with variation in $\mu_n$ being almost the sole contributor towards the objective value reached over 10 iterations. For 0.1 activation, the values were ($\mu_n = 0.352$, $\gamma_n = 0.0001$), i.e., almost entirely same. Problem~\ref{sec:ex2}, run over 300 iterations showed the ideal constant values being of the order ($\mu_n = 0.1$, $\gamma_n = 0.0001$) for various activations, with $\mu_n$, again being the dominant factor. A consistent trend showed the order of $\mu_n$ = $10^{-1}$ yielded good results. Although we conducted our grid search on the synchronous case, we found that in practice it yields similar performance improvements for asynchronous algorithms as well, so we use the same hyperparameters for both. 
+
+Next, we also compared the performance of different variations over $n$, specifically $\mu_n, \gamma_n$ of the form - 
+\begin{enumerate}
+    \item
+    \label{i:ld}
+    linear decrease ($a - bn$)
+    \item
+    \label{i:c}
+    constant ($c$)
+    \item 
+    \label{i:nld}
+    non-linear  decrease ($a-\frac{b}{n}$)
+    \item
+    \label{i:urd}
+    uniform random ($\sim U \left[ \epsilon, \frac{1}{\epsilon}\right]$)
+\end{enumerate}
+Results were compiled with the same metrics as described above and they showed that linear decrease \ref{i:ld} performed the best with hyperparameter values $\mu_n =$ max($0.01, 0.42 - 0.03n$) for Problem-\ref{sec:ex1}. This was followed by non-linear decrease \ref{i:nld} at a close second. Our findings suggest that decreasing strategies for hyperparameters tend to outperform constant ones, while increasing strategies perform poorly. 
+
+\section{Conclusion}
+We presented an open-source Julia implementation of the asynchronous projective splitting algorithm of Combettes and Eckstein for fully nonsmooth convex optimization. Our experiments on sparse classifier training and stereoscopic image recovery demonstrate that the algorithm works in practice. We verified that asynchrony can reduce wall-clock time while preserving convergence quality. We also observed that hyperparameter scheduling, especially for $\mu_n$, strongly affects performance, with decreasing strategies outperforming constant ones.
+
+This work bridges a gap between theoretical guarantees of asynchronous projective splitting and practical implementations.
+
+\section{Data Statement}
+The data (images) used to replicate these experiments is publically available and can be found at \href{https://github.com/zevwoodstock/AsyncProx/}{\texttt{https://github.com/zevwoodstock/AsyncProx/}}.
+
+
+%https://stackoverflow.com/questions/44261626/github-make-a-private-repository-partially-public
+
+
+%% The Appendices part is started with the command \appendix;
+%% appendix sections are then done as normal sections
+%% \appendix
+
+%% \section{}
+%% \label{}
+
+{\footnotesize{
+\bibliographystyle{elsarticle-num} 
+\bibliography{mybibfile}
+}}
+%\section*{Acknowledgments}
+{\small{
+{\bf Acknowledgments}:
+This research was partially supported by the DFG Cluster of Excellence MATH+ (EXC-2046/1,
+project id 390685689) funded by the Deutsche Forschungsgemeinschaft (DFG) as well as
+the Research Campus MODAL funded by the German Federal Ministry of Education and Research (BMBF) (fund numbers 05M14ZAM, 05M20ZBM).
+
+%\section*{Conflict of interest statement}
+{\bf Conflict of interest statement}:
+We declare no conflict of interest.
+
+%\section*{Author Credit Statement}
+{\bf Author Credit Statement}:
+This work was predominantly carried out by US, KG, and AD (with contribution level in that order) under the primary supervision of ZW and secondary supervision of SP.
+}}
+\end{document}
+\endinput
+%%
+%% End of file `elsarticle-template-num.tex'.
+
